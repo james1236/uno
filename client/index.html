@@ -1,0 +1,93 @@
+<html>
+<head>
+	<title>Uno</title>
+	<style>
+	#board {
+		position: fixed;
+		overflow: hidden;
+		
+		padding:5px;
+		
+		width: 100%;
+		height: 100%;
+
+		top:0px;
+		left:0px;
+	}
+	
+	img {
+	  image-rendering: pixelated;
+	  image-rendering: -moz-crisp-edges;
+	  image-rendering: crisp-edges;
+	}
+	
+	.deck {
+		position: relative;
+		width: auto;
+		height: 64px;
+		display: grid;
+	}
+	
+	.cardOverlay {
+		width: 100%;
+		height: 100%;
+		grid-area: 1 / 1;
+	}
+	
+	.cardUnderlay {
+		z-index: -1;
+		width: 100%;
+		height: 100%;
+		grid-area: 1 / 1;
+	}
+	
+	/* https://www.w3schools.com/howto/howto_css_flip_card.asp */
+	.card {
+		position: relative;
+		grid-area: 1 / 1;
+		background-color: transparent;
+		width: 48px;
+		height: 64px;
+		perspective: 1000px; /* Remove this if you don't want the 3D effect */
+		transform-origin: 50% 100%;
+	}
+
+	/* Position front and back sides */
+	.card-inner {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		text-align: center;
+		transition: transform 0.4s;
+		transform-style: preserve-3d;
+	}
+
+	/* Flip on hover */
+	.card:hover .card-inner {
+		transform: rotateY(180deg);
+	}
+
+	/* Position the front and back side */
+	.card-front, .card-back {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		backface-visibility: hidden;
+	}
+
+	.card-front {
+		display: grid;
+	}
+
+	/* Style the back side */
+	.card-back {
+		background-image: url("img/cards/back.png");
+		transform: rotateY(180deg);
+	}
+	</style>
+</head>
+<body>
+	<div id="board"></div>
+	<script src="js/main.js"></script>
+</body>
+</html>
