@@ -58,13 +58,15 @@ function createGame() {
 	game.stockDeck = shuffle(referenceDeck);
 	
 	for (player of players) {
-		game.playerDecks[player.id] = ["red-0","green-9","yellow-7","red-2","blue-4","red-3","red-1","yellow-1","yellow-6","blue-5","blue-8","red-2",];
+		game.playerDecks[player.id] = game.stockDeck;
 	}
 	
 	generateDecks();
 }
 
 function generateDecks() {
+	var deckSeperation = 10;
+	
 	for (player of players) {
 		deck = document.createElement("div");
 		deck.className = "deck";
@@ -73,13 +75,13 @@ function generateDecks() {
 		for (index = 0; index < game.playerDecks[player.id].length; index++) {
 			card = generateCard(game.playerDecks[player.id][index]);
 			card.style.top = "0px";
-			card.style.left = (index*20)+"px";
+			card.style.left = (index*deckSeperation)+"px";
 			deck.appendChild(card);
 		}
 		
 		board.appendChild(deck);
 		deck.style.top = "calc(50% - "+(deck.getBoundingClientRect().height/2)+"px)";
-		deck.style.left = "calc(50% - "+((48+(index*20))/2)+"px)";
+		deck.style.left = "calc(50% - "+((48+(index*deckSeperation))/2)+"px)";
 		//fanDeck(deck.id);
 	}
 }
