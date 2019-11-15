@@ -11,7 +11,7 @@ var players = [
 		wins: 0,
 		games: 0,
 		isuser: true,
-	}
+	},
 ];
 
 //Temp game info that gets reset every round
@@ -23,7 +23,7 @@ var game = {
 
 //Temp game setup info that exists for a session
 var config = {
-	cardsPerHand: 5,
+	maxCardsPerHand: 5,
 	 
 }
 
@@ -58,32 +58,88 @@ function createGame() {
 	game.stockDeck = shuffle(referenceDeck);
 	
 	for (player of players) {
-		game.playerDecks[player.id] = game.stockDeck;
+		game.playerDecks[player.id] = [];
 	}
 	
-	generateDecks();
+	if (!deal(config.maxCardsPerHand)) {
+		alert("Too many players");
+	}
+	generatePlayerDecks();
 }
 
-function generateDecks() {
-	var deckSeperation = 10;
+function deal(cardsPerHand) {
+	savedStockDeck = JSON.parse(JSON.stringify(game.stockDeck));
+	savedPlayerDecks = JSON.parse(JSON.stringify(game.playerDecks));
 	
-	for (player of players) {
-		deck = document.createElement("div");
-		deck.className = "deck";
-		deck.id = player.id;
-		
-		for (index = 0; index < game.playerDecks[player.id].length; index++) {
-			card = generateCard(game.playerDecks[player.id][index]);
-			card.style.top = "0px";
-			card.style.left = (index*deckSeperation)+"px";
-			deck.appendChild(card);
+	for (rep = 0; rep < cardsPerHand; rep++) {
+		for (player of players) {
+			if (game.stockDeck.length <= 10) {
+				//Not enough cards/too many players to get equal cards, try again with one less per player
+				game.stockDeck = JSON.parse(JSON.stringify(savedStockDeck));
+				game.playerDecks = JSON.parse(JSON.stringify(savedPlayerDecks));
+				deal(cardsPerHand-1);
+				return false;
+			} else {
+				game.playerDecks[player.id].push(game.stockDeck.pop());
+			}
 		}
-		
-		board.appendChild(deck);
-		deck.style.top = "calc(50% - "+(deck.getBoundingClientRect().height/2)+"px)";
-		deck.style.left = "calc(50% - "+((48+(index*deckSeperation))/2)+"px)";
-		//fanDeck(deck.id);
 	}
+	
+	return true;
+}
+
+function generatePlayerDecks() {
+	for (player of players) {
+		generatePlayerDeck(player.id);
+	}
+}
+
+function generatePlayerDeck(playerID) {
+	var deckSeperation = 24;
+	
+	deck = document.createElement("div");
+	deck.className = "deck";
+	deck.id = playerID;
+	
+	for (index = 0; index < game.playerDecks[playerID].length; index++) {
+		card = generateCard(game.playerDecks[playerID][index]);
+		card.style.top = "0px";
+		card.style.left = (index*deckSeperation)+"px";
+		deck.appendChild(card);
+	}
+	
+	board.appendChild(deck);
+	deck.style.left = "calc(50% - "+((48*(game.playerDecks[playerID].length+1)-deckSeperation*(game.playerDecks[playerID].length+0.5))/2)+"px)";
+	deck.style.bottom = "calc("+(deck.getBoundingClientRect().height/2)+"px + 0px)";
+	//fanDeck(deck.id);
+}
+
+
+function updatePlayerDecks() {
+	decks = document.getElementsByClassName("deck");
+	for (deck of decks) {
+		deck.innerHTML = "";
+		deck.parentNode.removeChild(deck);
+	}
+	generatePlayerDecks();
+}
+
+function updatePlayerDeck(playerID) {
+	deck = document.getElementById(playerID);
+	deck.innerHTML = "";
+	deck.parentNode.removeChild(deck);
+
+	generatePlayerDeck(playerID);
+}
+
+function playerDeckPush(cardType,playerID) {
+	game.playerDecks[playerID].push(cardType);
+	updatePlayerDeck(playerID);
+}
+
+function playerDeckRemoveAtIndex(index,playerID) {
+	game.playerDecks[playerID].splice(index, 1);
+	updatePlayerDeck(playerID);
 }
 
 /*function fanDeck(deckID) {
