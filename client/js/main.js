@@ -1,8 +1,12 @@
 var board = document.getElementById("board")
 var backgroundRotation = 0;
-var backgroundGradient1 = [107,120,177,1];
-var backgroundGradient2 = [107,120,177,1];
-var backgroundGradient3 = [51,71,177,1];
+var backgroundTimer = 0;
+//var backgroundGradient1 = [107,120,177,0.25];
+//var backgroundGradient2 = [107,120,177,0.25];
+//var backgroundGradient3 = [51,71,177,0.25];
+var backgroundGradient1 = [63,94,251,0.25];
+var backgroundGradient2 = [63,94,251,0.25];
+var backgroundGradient3 = [252,70,107,0.25];
 
 var gradientInterpolation = [0,0,100];
 
@@ -41,18 +45,19 @@ var game = {
 
 //Temp game setup info that exists for a session
 var config = {
-	maxCardsPerHand: 1,
+	maxCardsPerHand: 7,
 	 
 }
 
-setInterval(function () {
+//Fan test
+/* setInterval(function () {
 	config.maxCardsPerHand++;
 	if (config.maxCardsPerHand > 40) {
 		config.maxCardsPerHand = 1;
 	}
 	
 	createGame();
-},500);
+},500);*/
 
 
 var referenceDeck = [];
@@ -233,8 +238,14 @@ function generateStockPile() {
 	
 	stockPlaceholder = generateCard("back","stockPlaceholder");
 	stockPlaceholder.style.top = "calc(50% - 32px)";
-	stockPlaceholder.style.left = "calc(50% - 48px)";
+	stockPlaceholder.style.left = "calc(50% - 48px)";	
+	stockPlaceholder.classList.add("cardPick");
 	
+	stockPlaceholder2 = generateCard("back","stockPlaceholder2");
+	stockPlaceholder2.style.top = "calc(50% - 32px)";
+	stockPlaceholder2.style.left = "calc(50% - 48px)";
+	
+	stock.appendChild(stockPlaceholder2);
 	stock.appendChild(stockPlaceholder);
 	board.appendChild(stock);
 }
@@ -368,12 +379,18 @@ function clearBoard () {
 }
 
 function backgroundUpdate() {
+	backgroundTimer++;
+	document.body.style.backgroundPosition = "right "+((backgroundTimer/2)%64)+"px bottom "+((backgroundTimer/2)%64)+"px";
+	
 	backgroundRotation+=0.1;
 	
 	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+backgroundGradient1[0]+","+backgroundGradient1[1]+","+backgroundGradient1[2]+","+backgroundGradient1[3]+") "+gradientInterpolation[0]+"%, rgba("+backgroundGradient2[0]+","+backgroundGradient2[1]+","+backgroundGradient2[2]+","+backgroundGradient2[3]+") "+gradientInterpolation[1]+"%, rgba("+backgroundGradient3[0]+","+backgroundGradient3[1]+","+backgroundGradient3[2]+","+backgroundGradient3[3]+") "+gradientInterpolation[2]+"%)";
+	
+	requestAnimationFrame(backgroundUpdate);
 }
 
-setInterval(backgroundUpdate,1000/60);
+//console.log("bgInterval: "+setInterval(backgroundUpdate,1000/60));
+backgroundUpdate();
 
 
 function shuffle(b) {
