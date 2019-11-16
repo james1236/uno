@@ -4,9 +4,9 @@ var backgroundTimer = 0;
 //var backgroundGradient1 = [107,120,177,0.25];
 //var backgroundGradient2 = [107,120,177,0.25];
 //var backgroundGradient3 = [51,71,177,0.25];
-var backgroundGradient1 = [63,94,251,0.25];
-var backgroundGradient2 = [63,94,251,0.25];
-var backgroundGradient3 = [252,70,107,0.25];
+var backgroundGradient1 = [0,42,255,0.5];
+var backgroundGradient2 = [63,94,251,0.5];
+var backgroundGradient3 = [120,229,238,0.5];
 
 var gradientInterpolation = [0,0,100];
 
@@ -196,19 +196,10 @@ function generatePlayerDeck(playerID) {
 		}
 
 		//card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
-			//Math.cos((bearing)*Math.PI/180)*radius, //x
-			//Math.sin((bearing)*Math.PI/180)*radius, //y
-			//bearing, //currentBearing
-			
-		//card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
-		//card.style.left = "calc(50% + "+Math.cos((bearing)*Math.PI/180)*radius+"px)";
 		
 		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)))+90;
-		//alert(bearing);
-		//card.style.left = "calc(50% + "+((Math.cos((bearing)*Math.PI/180)*radius)-radius)+"px)";
 		
 		card.style.left = "calc(50% + "+((Math.cos((bearing)*Math.PI/180)*radius))+"px)";
-		//Math.cos((bearing)*Math.PI/180)*radius
 		
 		if (getPlayerById(playerID).isuser) {
 			card.style.bottom = 48+(Math.sin((bearing)*Math.PI/180)*radius)-radius+"px";
@@ -220,15 +211,7 @@ function generatePlayerDeck(playerID) {
 		deck.appendChild(card);
 	}
 	
-	//deck.style.width = 48+(deckSeperation*(game.playerDecks[playerID].length-1));
-	//deck.style.width = "0px";
-	//deck.style.height = "0px";
-	
 	board.appendChild(deck);
-	
-	//deck.style.left = "50%";
-	//deck.style.bottom = "96px";
-	//deck.style.transformOrigin = "50% 50%";
 }
 
 function generateStockPile() {
@@ -380,9 +363,9 @@ function clearBoard () {
 
 function backgroundUpdate() {
 	backgroundTimer++;
-	document.body.style.backgroundPosition = "right "+((backgroundTimer/2)%64)+"px bottom "+((backgroundTimer/2)%64)+"px";
+	document.body.style.backgroundPosition = "right "+((backgroundTimer/3)%64)+"px bottom "+((backgroundTimer/3)%64)+"px";
 	
-	backgroundRotation+=0.1;
+	backgroundRotation+=0.21;
 	
 	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+backgroundGradient1[0]+","+backgroundGradient1[1]+","+backgroundGradient1[2]+","+backgroundGradient1[3]+") "+gradientInterpolation[0]+"%, rgba("+backgroundGradient2[0]+","+backgroundGradient2[1]+","+backgroundGradient2[2]+","+backgroundGradient2[3]+") "+gradientInterpolation[1]+"%, rgba("+backgroundGradient3[0]+","+backgroundGradient3[1]+","+backgroundGradient3[2]+","+backgroundGradient3[3]+") "+gradientInterpolation[2]+"%)";
 	
