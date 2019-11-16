@@ -1,7 +1,12 @@
 var board = document.getElementById("board")
 var backgroundRotation = 0;
-var backgroundGradient1 = [107,120,177,1];
-var backgroundGradient2 = [51,71,177,1];
+//var backgroundGradient1 = [107,120,177,1];
+var backgroundGradient1 = [116,131,201,1];
+//var backgroundGradient2 = [51,71,177,1];
+var backgroundGradient2 = [116,131,201,1];
+var backgroundGradient3 = [22,51,207,1];
+
+var gradientInterpolation = [0,0,100];
 
 //This is "permenant" server side info
 var players = [
@@ -11,13 +16,28 @@ var players = [
 		wins: 0,
 		games: 0,
 		isuser: true,
+	},	
+	{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
 	},
 ];
 
+function getPlayerById(id) {
+	for (player of players) {
+		if (player.id == id) {
+			return player;
+		}
+	}
+	return false;
+}
+
 //Temp game info that gets reset every round
 var game = {
-	stockDeck: [],
-	discardDeck: [],
+	stockPile: [],
+	discardPile: [],
 	playerDecks: {},
 };
 
@@ -55,7 +75,7 @@ createGame();
 
 function createGame() {
 	clearBoard();
-	game.stockDeck = shuffle(referenceDeck);
+	game.stockPile = shuffle(referenceDeck);
 	
 	for (player of players) {
 		game.playerDecks[player.id] = [];
@@ -64,26 +84,30 @@ function createGame() {
 	if (!deal(config.maxCardsPerHand)) {
 		alert("Too many players");
 	}
+	generateStockPile();
+	generateDiscardPile();
 	generatePlayerDecks();
 }
 
 function deal(cardsPerHand) {
-	savedStockDeck = JSON.parse(JSON.stringify(game.stockDeck));
+	savedStockPile = JSON.parse(JSON.stringify(game.stockPile));
 	savedPlayerDecks = JSON.parse(JSON.stringify(game.playerDecks));
 	
 	for (rep = 0; rep < cardsPerHand; rep++) {
 		for (player of players) {
-			if (game.stockDeck.length <= 10) {
+			if (game.stockPile.length <= 10) {
 				//Not enough cards/too many players to get equal cards, try again with one less per player
-				game.stockDeck = JSON.parse(JSON.stringify(savedStockDeck));
+				game.stockPile = JSON.parse(JSON.stringify(savedStockPile));
 				game.playerDecks = JSON.parse(JSON.stringify(savedPlayerDecks));
 				deal(cardsPerHand-1);
 				return false;
 			} else {
-				game.playerDecks[player.id].push(game.stockDeck.pop());
+				game.playerDecks[player.id].push(game.stockPile.pop());
 			}
 		}
 	}
+	
+	game.discardPile.push(game.stockPile.pop());
 	
 	return true;
 }
@@ -102,26 +126,90 @@ function generatePlayerDeck(playerID) {
 	deck.id = playerID;
 	
 	for (index = 0; index < game.playerDecks[playerID].length; index++) {
-		card = generateCard(game.playerDecks[playerID][index]);
-		card.style.top = "0px";
-		card.style.left = (index*deckSeperation)+"px";
+		if (getPlayerById(playerID).isuser) {
+			card = generateCard(game.playerDecks[playerID][index],index);
+			card.classList.add("cardPick");
+		} else {
+			card = generateCard("back",index);
+		}
+
+		card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
+		
+		if (getPlayerById(playerID).isuser) {
+			card.style.bottom = 24+"px";
+		} else {
+			card.style.top = -64+24+"px";
+			card.style.transform = "rotate(180deg)";
+		}
 		deck.appendChild(card);
 	}
 	
+	//deck.style.width = 48+(deckSeperation*(game.playerDecks[playerID].length-1));
+	//deck.style.width = "0px";
+	//deck.style.height = "0px";
+	
 	board.appendChild(deck);
-	deck.style.left = "calc(50% - "+((48*(game.playerDecks[playerID].length+1)-deckSeperation*(game.playerDecks[playerID].length+0.5))/2)+"px)";
-	deck.style.bottom = "calc("+(deck.getBoundingClientRect().height/2)+"px + 0px)";
-	//fanDeck(deck.id);
+	
+	//deck.style.left = "50%";
+	//deck.style.bottom = "96px";
+	//deck.style.transformOrigin = "50% 50%";
 }
 
+function generateStockPile() {
+	stock = document.createElement("div");
+	stock.className = "pile";
+	stock.id = "stock";
+	
+	stockPlaceholder = generateCard("back","stockPlaceholder");
+	stockPlaceholder.style.top = "calc(50% - 32px)";
+	stockPlaceholder.style.left = "calc(50% - 48px)";
+	
+	stock.appendChild(stockPlaceholder);
+	board.appendChild(stock);
+}
+
+function generateDiscardPile() {	
+	discard = document.createElement("div");
+	discard.className = "pile";
+	discard.id = "discard";
+	
+	discardPlaceholder = generateCard(game.discardPile[game.discardPile.length-1],"discardPlaceholder");
+	discardPlaceholder.style.top = "calc(50% - 32px)";
+	discardPlaceholder.style.left = "calc(50% + 24px)";
+	
+	discard.appendChild(discardPlaceholder);
+	board.appendChild(discard);
+}
 
 function updatePlayerDecks() {
 	decks = document.getElementsByClassName("deck");
-	for (deck of decks) {
-		deck.innerHTML = "";
-		deck.parentNode.removeChild(deck);
+	while (decks.length > 0) {
+		decks[0].innerHTML = "";
+		decks[0].id = "-";
+		decks[0].parentNode.removeChild(decks[0]);
+		decks = document.getElementsByClassName("deck");
 	}
 	generatePlayerDecks();
+}
+
+function updateStockPile() {
+	stock = document.getElementsById("stock");
+	
+	stock.innerHTML = "";
+	stock.id = "-";
+	stock.parentNode.removeChild(stock);
+		
+	generateStockPile();
+}
+
+function updateDiscardPile() {
+	discard = document.getElementsById("discard");
+	
+	discard.innerHTML = "";
+	discard.id = "-";
+	discard.parentNode.removeChild(discard);
+		
+	generateDiscardPile();
 }
 
 function updatePlayerDeck(playerID) {
@@ -142,29 +230,18 @@ function playerDeckRemoveAtIndex(index,playerID) {
 	updatePlayerDeck(playerID);
 }
 
-/*function fanDeck(deckID) {
-	var angle = 20;
-	var radius = 1;
-	
-	deck = document.getElementById(deckID);
-	cards = deck.getElementsByClassName("card");
-	
-	center = Math.round(cards.length/2)-1;
-	
-	for (index = 0; index < cards.length; index++) {
-		cards[index].style.transform = "rotate("+(angle*(index-center))+"deg)";
-		//cards[index].style.top = ((Math.abs(index-center)+1)*6)+"px";
-		
-		cards[index].style.left = (parseInt(cards[index].style.left,10) + (Math.cos(angle*(index-center))*radius))+"px;";
-		//cards[index].style.top = (Math.sin(angle*(index-center))*radius)+"px;";
-	}
-}*/
+function getElementGlobalPosition(el) {
+    var rect = el.getBoundingClientRect(),
+    scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+    scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    return { top: rect.top + scrollTop, left: rect.left + scrollLeft }
+}
 
-function generateCard(cardType) {
-	console.log(cardType);
+
+function generateCard(cardType,index) {
 	cardOuter = document.createElement("div");
 	cardOuter.className = "card";
-	cardOuter.id = cardType;
+	cardOuter.id = cardType+"@"+index;
 	
 	card = document.createElement("div");
 	card.className = "card-inner";
@@ -222,7 +299,7 @@ function clearBoard () {
 function backgroundUpdate() {
 	backgroundRotation+=0.1;
 	
-	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+backgroundGradient1[0]+","+backgroundGradient1[1]+","+backgroundGradient1[2]+","+backgroundGradient1[3]+") 50%, rgba("+backgroundGradient2[0]+","+backgroundGradient2[1]+","+backgroundGradient2[2]+","+backgroundGradient2[3]+") 100%)";
+	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+backgroundGradient1[0]+","+backgroundGradient1[1]+","+backgroundGradient1[2]+","+backgroundGradient1[3]+") "+gradientInterpolation[0]+"%, rgba("+backgroundGradient2[0]+","+backgroundGradient2[1]+","+backgroundGradient2[2]+","+backgroundGradient2[3]+") "+gradientInterpolation[1]+"%, rgba("+backgroundGradient3[0]+","+backgroundGradient3[1]+","+backgroundGradient3[2]+","+backgroundGradient3[3]+") "+gradientInterpolation[2]+"%)";
 }
 
 setInterval(backgroundUpdate,1000/60);

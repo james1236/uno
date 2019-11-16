@@ -6,7 +6,7 @@
 		position: fixed;
 		overflow: hidden;
 		
-		padding:5px;
+		padding:0px;
 		
 		width: 100%;
 		height: 100%;
@@ -23,8 +23,8 @@
 	
 	.deck {
 		position: absolute;
-		width: auto;
-		height: 64px;
+		width: 0px;
+		height: 0px;
 		display: grid;
 	}
 	
@@ -43,7 +43,7 @@
 	
 	/* https://www.w3schools.com/howto/howto_css_flip_card.asp */
 	.card {
-		position: relative;
+		position: fixed;
 		grid-area: 1 / 1;
 		background-color: transparent;
 		width: 48px; /*48px;*/
@@ -67,7 +67,7 @@
 	}
 
 	/* Flip on hover */
-	.card:hover .card-inner {
+	.cardPick:hover .card-inner {
 		top:-7px;
 		transform: rotateY(180deg);
 		transform: rotate(5deg);
@@ -96,7 +96,7 @@
 	}
 	</style>
 </head>
-<body>
+<body onresize="updatePlayerDecks()">
 	<div id="board"></div>
 	<script src="js/main.js"></script>
 </body>
