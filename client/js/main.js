@@ -162,9 +162,21 @@ function drawUnitCircle() {
 }
 
 function generatePlayerDeck(playerID) {
-	radius = 500*(Math.pow(game.playerDecks[playerID].length/20,2))*3;
-	//deckSeperation = 1500/radius;
-	deckSeperation = ((60-game.playerDecks[playerID].length)*30)/radius;
+	testvar = game.playerDecks[playerID].length;
+	if (testvar < 4) {
+		testvar = 4;
+	}
+	if (testvar < 10) {
+		testvar+=2;
+	}
+	
+	if (testvar > 20) {
+		testvar+=2;
+		testvar = 20;
+	}
+	
+	radius = 500*(Math.pow(testvar/20,2))*3;
+	deckSeperation = ((60-testvar)*30)/radius;
 	
 	deck = document.createElement("div");
 	deck.className = "deck";
