@@ -4,9 +4,12 @@ var backgroundTimer = 0;
 //var backgroundGradient1 = [107,120,177,0.25];
 //var backgroundGradient2 = [107,120,177,0.25];
 //var backgroundGradient3 = [51,71,177,0.25];
-var backgroundGradient1 = [0,42,255,0.5];
-var backgroundGradient2 = [63,94,251,0.5];
-var backgroundGradient3 = [120,229,238,0.5];
+//var backgroundGradient1 = [0,42,255,0.5];
+//var backgroundGradient2 = [63,94,251,0.5];
+//var backgroundGradient3 = [120,229,238,0.5];
+var backgroundGradient1 = [63, 94, 251,0.25];
+var backgroundGradient2 = [63, 94, 251,0.25];
+var backgroundGradient3 = [252, 70, 107,0.25];
 
 var gradientInterpolation = [0,0,100];
 
@@ -221,12 +224,12 @@ function generateStockPile() {
 	
 	stockPlaceholder = generateCard("back","stockPlaceholder");
 	stockPlaceholder.style.top = "calc(50% - 32px)";
-	stockPlaceholder.style.left = "calc(50% - 48px)";	
+	stockPlaceholder.style.left = "calc(50% - 24px - 10px)";	
 	stockPlaceholder.classList.add("cardPick");
 	
 	stockPlaceholder2 = generateCard("back","stockPlaceholder2");
 	stockPlaceholder2.style.top = "calc(50% - 32px)";
-	stockPlaceholder2.style.left = "calc(50% - 48px)";
+	stockPlaceholder2.style.left = "calc(50% - 24px - 10px)";
 	
 	stock.appendChild(stockPlaceholder2);
 	stock.appendChild(stockPlaceholder);
@@ -240,7 +243,7 @@ function generateDiscardPile() {
 	
 	discardPlaceholder = generateCard(game.discardPile[game.discardPile.length-1],"discardPlaceholder");
 	discardPlaceholder.style.top = "calc(50% - 32px)";
-	discardPlaceholder.style.left = "calc(50% + 24px)";
+	discardPlaceholder.style.left = "calc(50% + 24px + 10px)";
 	
 	discard.appendChild(discardPlaceholder);
 	board.appendChild(discard);
@@ -354,7 +357,88 @@ function generateCard(cardType,index) {
 	
 	card.appendChild(cardBack);
 	
+	cardOuter.setAttribute('draggable', true);
+	//cardOuter.setAttribute('ondrag', "draggingCard(event)");
+	//cardOuter.setAttribute('ondrop', "dropCard(event)");
+	//cardOuter.setAttribute('ondragover', "dragCardOver(event)");
+	cardOuter.setAttribute('ondragstart', "dragCardStart(event)");
+	
 	return cardOuter;
+}
+
+var userDrag;
+var mouseX = 0;
+var mouseY = 0;
+
+function dragCardStart(e) {
+	e.preventDefault();
+	
+	if (e.srcElement.id.indexOf("userDrag") != -1) {
+		return;
+	}
+	
+	while (document.getElementsByClassName("userDrag").length > 0) {
+		document.getElementsByClassName("userDrag")[0].innerHTML = "";
+		document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+	}
+	
+	card = generateCard(e.srcElement.id.split("@",1)[0],"userDrag");
+	board.appendChild(card);
+	
+	card.style.left = e.x - 24 + "px";
+	card.style.top = e.y - 32 + "px";
+	card.style.transform = e.srcElement.style.transform;
+	card.classList.add("userDrag");
+	//card.style.transition = "rotate 1s";
+	
+	e.card = card.id;
+	
+	//document.getElementById(userDrag.card).style.transition = "all 1s";
+	//document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+	
+	userDrag = JSON.parse(JSON.stringify(e));
+}
+
+document.addEventListener("mousemove", function (e) {
+	if (e.touches == undefined) {
+		mouseX = e.clientX;
+		mouseY = e.clientY;
+	} else {
+		mouseX = parseInt(e.touches[0].pageX);
+		mouseY = parseInt(e.touches[0].pageY);
+	}
+	
+	if (userDrag) {
+		document.getElementById(userDrag.card).style.left = mouseX - 24 + "px";
+		document.getElementById(userDrag.card).style.top = mouseY - 32 + "px";
+		
+		document.getElementById(userDrag.card).style.transition = "transform .3s";
+		document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+	}
+}, false);
+
+document.addEventListener("mouseup", function (e) {	
+	if (userDrag) {
+		document.getElementById(userDrag.card).style.transition = "all .6s";
+		document.getElementById(userDrag.card).style.left = 0 + "px";
+		document.getElementById(userDrag.card).style.top = 0 + "px";
+		document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+		
+		userDrag = null;
+	}
+}, false);
+
+//https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
+function lerp(a, b, percent)
+{
+    return a + percent * (b - a);
+}
+
+function distanceBetween(x1,y1,x2,y2) {
+	a = x1 - x2;
+	b = y1 - y2;
+
+	return Math.abs(Math.sqrt( a*a + b*b ));
 }
 
 function clearBoard () {

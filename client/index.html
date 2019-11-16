@@ -23,6 +23,11 @@
 	  image-rendering: pixelated;
 	  image-rendering: -moz-crisp-edges;
 	  image-rendering: crisp-edges;
+	  /*backface-visibility: hidden;*/
+	}
+	
+	img, div {
+		user-select: none;
 	}
 	
 	.deck {
@@ -59,6 +64,7 @@
 	/* Position front and back sides */
 	.card-inner {
 		position: relative;
+		pointer-events: none;
 		width: 100%;
 		height: 100%;
 		text-align: center;
@@ -82,7 +88,7 @@
 	.cardFlip:hover .card-inner {
 		transform: rotateY(180deg);
 		transition: all .2s;
-	}	
+	}		
 
 	/* Position the front and back side */
 	.card-front, .card-back {
