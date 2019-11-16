@@ -41,9 +41,18 @@ var game = {
 
 //Temp game setup info that exists for a session
 var config = {
-	maxCardsPerHand: 5,
+	maxCardsPerHand: 1,
 	 
 }
+
+setInterval(function () {
+	config.maxCardsPerHand++;
+	if (config.maxCardsPerHand > 40) {
+		config.maxCardsPerHand = 1;
+	}
+	
+	createGame();
+},500);
 
 
 var referenceDeck = [];
@@ -110,7 +119,11 @@ function deal(cardsPerHand) {
 	return true;
 }
 
-drawUnitCircle();
+function generatePlayerDecks() {
+	for (player of players) {
+		generatePlayerDeck(player.id);
+	}
+}
 
 function drawUnitCircle() {
 	if (document.getElementById("circleTest")) {
@@ -148,20 +161,16 @@ function drawUnitCircle() {
 	board.appendChild(circleTest);
 }
 
-function generatePlayerDecks() {
-	for (player of players) {
-		generatePlayerDeck(player.id);
-	}
-}
-
 function generatePlayerDeck(playerID) {
-	var deckSeperation = 24;
+	radius = 500*(Math.pow(game.playerDecks[playerID].length/20,2))*3;
+	//deckSeperation = 1500/radius;
+	deckSeperation = ((60-game.playerDecks[playerID].length)*30)/radius;
 	
 	deck = document.createElement("div");
 	deck.className = "deck";
 	deck.id = playerID;
 	
-	for (index = 0; index < game.playerDecks[playerID].length; index++) {
+	for (index = game.playerDecks[playerID].length-1; index > -1; index--) {
 		if (getPlayerById(playerID).isuser) {
 			card = generateCard(game.playerDecks[playerID][index],index);
 			card.classList.add("cardPick");
@@ -169,13 +178,27 @@ function generatePlayerDeck(playerID) {
 			card = generateCard("back",index);
 		}
 
-		card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
+		//card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
+			//Math.cos((bearing)*Math.PI/180)*radius, //x
+			//Math.sin((bearing)*Math.PI/180)*radius, //y
+			//bearing, //currentBearing
+			
+		//card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
+		//card.style.left = "calc(50% + "+Math.cos((bearing)*Math.PI/180)*radius+"px)";
+		
+		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)))+90;
+		//alert(bearing);
+		//card.style.left = "calc(50% + "+((Math.cos((bearing)*Math.PI/180)*radius)-radius)+"px)";
+		
+		card.style.left = "calc(50% + "+((Math.cos((bearing)*Math.PI/180)*radius))+"px)";
+		//Math.cos((bearing)*Math.PI/180)*radius
 		
 		if (getPlayerById(playerID).isuser) {
-			card.style.bottom = 24+"px";
+			card.style.bottom = 48+(Math.sin((bearing)*Math.PI/180)*radius)-radius+"px";
+			card.style.transform = "rotate("+(-bearing+90)+"deg)";
 		} else {
-			card.style.top = -64+24+"px";
-			card.style.transform = "rotate(180deg)";
+			card.style.top = 48+(Math.sin((bearing)*Math.PI/180)*radius)-radius+"px";
+			card.style.transform = "rotate("+(90+bearing)+"deg)";
 		}
 		deck.appendChild(card);
 	}
