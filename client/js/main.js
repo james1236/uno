@@ -1,10 +1,8 @@
 var board = document.getElementById("board")
 var backgroundRotation = 0;
-//var backgroundGradient1 = [107,120,177,1];
-var backgroundGradient1 = [116,131,201,1];
-//var backgroundGradient2 = [51,71,177,1];
-var backgroundGradient2 = [116,131,201,1];
-var backgroundGradient3 = [22,51,207,1];
+var backgroundGradient1 = [107,120,177,1];
+var backgroundGradient2 = [107,120,177,1];
+var backgroundGradient3 = [51,71,177,1];
 
 var gradientInterpolation = [0,0,100];
 
@@ -110,6 +108,44 @@ function deal(cardsPerHand) {
 	game.discardPile.push(game.stockPile.pop());
 	
 	return true;
+}
+
+drawUnitCircle();
+
+function drawUnitCircle() {
+	if (document.getElementById("circleTest")) {
+		circleTest = document.getElementById("circleTest");
+		circleTest.innerHTML = "";
+		circleTest.parentNode.removeChild(circleTest);
+	}
+		
+	radius = 250;
+	angularStep = 10;
+	startBearing = -90;
+	
+	positionArray = [];
+	circleTest = document.createElement("div");
+	circleTest.id = "circleTest";
+	circleTest.style = "position: absolute; display: grid;width: 0px;height: 0px;";
+	
+	for (bearing = startBearing; bearing < 360+startBearing; bearing+=angularStep) {
+		positionArray.push([
+			Math.cos((bearing)*Math.PI/180)*radius, //x
+			Math.sin((bearing)*Math.PI/180)*radius, //y
+			bearing, //currentBearing
+		]);
+		
+		point = generateCard(referenceDeck[Math.floor(Math.random()*referenceDeck.length)],0);
+		point.id = bearing;
+		
+		point.style = "position: fixed; grid-area: 1 / 1; left: calc(50% + "+(positionArray[positionArray.length-1][0]-24)+"px); top: calc(50% + "+(positionArray[positionArray.length-1][1]-32)+"px); width: 48px; height: 64px; transformOrigin: 50% 50%; transform: rotate("+(bearing+90)+"deg);";
+		
+		point.classList.add("cardFlip");
+		
+		circleTest.appendChild(point);
+	}
+	
+	board.appendChild(circleTest);
 }
 
 function generatePlayerDecks() {
