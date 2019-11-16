@@ -163,20 +163,20 @@ function drawUnitCircle() {
 
 function generatePlayerDeck(playerID) {
 	testvar = game.playerDecks[playerID].length;
-	if (testvar < 4) {
-		testvar = 4;
+	if (testvar < 3) {
+		testvar = 3;
 	}
 	if (testvar < 10) {
 		testvar+=2;
 	}
 	
-	if (testvar > 20) {
+	if (testvar > 22) {
 		testvar+=2;
-		testvar = 20;
+		testvar = 22;
 	}
 	
 	radius = 500*(Math.pow(testvar/20,2))*3;
-	deckSeperation = ((60-testvar)*30)/radius;
+	deckSeperation = ((60.5-testvar)*30)/radius;
 	
 	deck = document.createElement("div");
 	deck.className = "deck";
