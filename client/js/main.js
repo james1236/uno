@@ -143,6 +143,7 @@ function setGameState(target) {
 				if (player.isuser) {
 					for (card of document.getElementById(player.id).childNodes) {
 						card.classList.add("cardPick");
+						card.classList.remove("cardTease");
 					}
 				}
 			}
@@ -155,6 +156,7 @@ function setGameState(target) {
 				if (player.isuser) {
 					for (card of document.getElementById(player.id).childNodes) {
 						card.classList.remove("cardPick");
+						card.classList.add("cardTease");
 					}
 				}
 			}
@@ -485,6 +487,8 @@ document.addEventListener("mouseup", function (e) {
 		},500);
 		
 		userDrag = null;
+		
+		setGameState("otherTurn");
 	}
 }, false);
 
