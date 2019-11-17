@@ -141,6 +141,7 @@ function setGameState(target) {
 		case "yourTurn":
 			for (player of players) {
 				if (player.isuser) {
+					document.getElementById(player.id).style.opacity = 1;
 					for (card of document.getElementById(player.id).childNodes) {
 						card.classList.add("cardPick");
 						card.classList.remove("cardTease");
@@ -149,11 +150,13 @@ function setGameState(target) {
 			}
 
 			document.getElementById("back@stockPlaceholder").classList.add("cardPick");
+			document.getElementById("back@stockPlaceholder").classList.remove("cardTease");
 
 			break;
 		case "otherTurn":
 			for (player of players) {
 				if (player.isuser) {
+					document.getElementById(player.id).style.opacity = 0.5;
 					for (card of document.getElementById(player.id).childNodes) {
 						card.classList.remove("cardPick");
 						card.classList.add("cardTease");
@@ -161,6 +164,7 @@ function setGameState(target) {
 				}
 			}
 			document.getElementById("back@stockPlaceholder").classList.remove("cardPick");
+			document.getElementById("back@stockPlaceholder").classList.add("cardTease");
 			
 			break;
 	}
@@ -322,14 +326,14 @@ function updatePlayerDeck(playerID) {
 	generatePlayerDeck(playerID);
 }
 
-function playerDeckPush(playerID,index) {
-	game.playerDecks[playerID].push(cardType);
-	updatePlayerDeck(playerID);
+function playerDeckInsertAtIndex(playerID,cardType,index,noUpdate=false) {
+	game.playerDecks[playerID].splice(index, 0, cardType);
+	if (!noUpdate) {updatePlayerDeck(playerID);}
 }
 
-function playerDeckRemoveAtIndex(playerID,index) {
+function playerDeckRemoveAtIndex(playerID,index,noUpdate) {
 	game.playerDecks[playerID].splice(index, 1);
-	updatePlayerDeck(playerID);
+	if (!noUpdate) {updatePlayerDeck(playerID);}
 }
 
 function getElementGlobalPosition(el) {
@@ -464,33 +468,80 @@ document.addEventListener("mousemove", function (e) {
 
 document.addEventListener("mouseup", function (e) {	
 	if (userDrag) {
-		document.getElementById(userDrag.card).style.transition = "all .5s";
-		document.getElementById(userDrag.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
-		document.getElementById(userDrag.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
-		document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
-		
-		if (document.getElementsByClassName("userDrag").deck != "stock" && document.getElementsByClassName("userDrag").deck != "discard") {
-			playerDeckRemoveAtIndex(document.getElementsByClassName("userDrag").deck,parseInt(document.getElementsByClassName("userDrag").card.split("@",1)[1]));
-		}
-		
-		//document.getElementById(userDrag.card).style.transition += "translate";
-		if (userDrag.srcElement.id.indexOf("stock") != -1) {
-			document.getElementById(userDrag.card).classList.add("cardFlip");
-		}
-		
-		setTimeout(function () {
-			document.getElementsByClassName("userDrag").srcElement.style.display = "block";
-			while (document.getElementsByClassName("userDrag").length > 0) {
-				document.getElementsByClassName("userDrag")[0].innerHTML = "";
-				document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+		if (document.getElementsByClassName("userDrag").deck != "stock" && returnInRange()) {
+			document.getElementById(userDrag.card).style.transition = "all .25s";
+			document.getElementById(userDrag.card).style.left = document.getElementsByClassName("userDrag").srcElement.style.left;
+			document.getElementById(userDrag.card).style.top = (window.innerHeight - 64 - parseInt(document.getElementsByClassName("userDrag").srcElement.style.bottom,10))+"px";
+			document.getElementById(userDrag.card).style.transform = document.getElementsByClassName("userDrag").srcElement.style.transform;
+			
+			setTimeout(function () {
+				document.getElementsByClassName("userDrag").srcElement.style.display = "block";
+				while (document.getElementsByClassName("userDrag").length > 0) {
+					document.getElementsByClassName("userDrag")[0].innerHTML = "";
+					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+				}
+			},250);
+			
+			userDrag = null;
+		} else {
+			document.getElementById(userDrag.card).style.transition = "all .5s";
+			document.getElementById(userDrag.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
+			document.getElementById(userDrag.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
+			document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+			
+			if (document.getElementsByClassName("userDrag").deck != "stock" && document.getElementsByClassName("userDrag").deck != "discard") {
+				playerDeckRemoveAtIndex(document.getElementsByClassName("userDrag").deck,parseInt(document.getElementsByClassName("userDrag").card.split("@",1)[1]));
 			}
-		},500);
-		
-		userDrag = null;
-		
-		setGameState("otherTurn");
+			
+			//document.getElementById(userDrag.card).style.transition += "translate";
+			if (userDrag.srcElement.id.indexOf("stock") != -1) {
+				document.getElementById(userDrag.card).classList.add("cardFlip");
+			}
+			
+			setTimeout(function () {
+				document.getElementsByClassName("userDrag").srcElement.style.display = "block";
+				while (document.getElementsByClassName("userDrag").length > 0) {
+					document.getElementsByClassName("userDrag")[0].innerHTML = "";
+					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+				}
+			},500);
+			
+			userDrag = null;
+			
+			setGameState("otherTurn");
+		}
 	}
 }, false);
+
+function playCard() {
+	
+}
+
+function returnCard() {
+	
+}
+
+
+function returnInRange() {
+	if (gameState != "yourTurn" || ((window.innerHeight - (mouseY+32))*1.25 < (mouseY+32) - (document.getElementById("back@stockPlaceholder2").getBoundingClientRect().top+32))) {
+		return true;
+	}
+	return false;
+}
+
+function moveCard(playerID,startIndex,targetIndex) {
+	if (targetIndex == startIndex) {
+		return;
+	}
+	if (targetIndex < startIndex) {
+		playerDeckInsertAtIndex(playerID,game.playerDecks[playerID][startIndex],targetIndex,true);
+		playerDeckRemoveAtIndex(playerID,startIndex+1,true);
+	} else {
+		playerDeckInsertAtIndex(playerID,game.playerDecks[playerID][startIndex],targetIndex,true);
+		playerDeckRemoveAtIndex(playerID,startIndex,true);
+	}
+	updatePlayerDeck(playerID);
+}
 
 //https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
 function lerp(a, b, percent)
@@ -515,7 +566,13 @@ function backgroundUpdate() {
 	
 	backgroundRotation+=0.21;
 	
-	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+backgroundGradient1[0]+","+backgroundGradient1[1]+","+backgroundGradient1[2]+","+backgroundGradient1[3]+") "+gradientInterpolation[0]+"%, rgba("+backgroundGradient2[0]+","+backgroundGradient2[1]+","+backgroundGradient2[2]+","+backgroundGradient2[3]+") "+gradientInterpolation[1]+"%, rgba("+backgroundGradient3[0]+","+backgroundGradient3[1]+","+backgroundGradient3[2]+","+backgroundGradient3[3]+") "+gradientInterpolation[2]+"%)";
+	bgg1 = JSON.parse(JSON.stringify(backgroundGradient1)); bgg2 = JSON.parse(JSON.stringify(backgroundGradient2)); bgg3 = JSON.parse(JSON.stringify(backgroundGradient3));
+	
+	if (gameState != "yourTurn") {
+		bgg1[3] = 0.15; bgg2[3] = 0.15; bgg3[3] = 0.15;
+	}
+	
+	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+bgg1[0]+","+bgg1[1]+","+bgg1[2]+","+bgg1[3]+") "+gradientInterpolation[0]+"%, rgba("+bgg2[0]+","+bgg2[1]+","+bgg2[2]+","+bgg2[3]+") "+gradientInterpolation[1]+"%, rgba("+bgg3[0]+","+bgg3[1]+","+bgg3[2]+","+bgg3[3]+") "+gradientInterpolation[2]+"%)";
 	
 	requestAnimationFrame(backgroundUpdate);
 }
