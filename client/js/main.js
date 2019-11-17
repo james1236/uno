@@ -244,6 +244,7 @@ function generateDiscardPile() {
 	discardPlaceholder = generateCard(game.discardPile[game.discardPile.length-1],"discardPlaceholder");
 	discardPlaceholder.style.top = "calc(50% - 32px)";
 	discardPlaceholder.style.left = "calc(50% + 24px + 10px)";
+	discardPlaceholder.classList.add("discardPlaceholder");
 	
 	discard.appendChild(discardPlaceholder);
 	board.appendChild(discard);
@@ -288,12 +289,12 @@ function updatePlayerDeck(playerID) {
 	generatePlayerDeck(playerID);
 }
 
-function playerDeckPush(cardType,playerID) {
+function playerDeckPush(playerID,index) {
 	game.playerDecks[playerID].push(cardType);
 	updatePlayerDeck(playerID);
 }
 
-function playerDeckRemoveAtIndex(index,playerID) {
+function playerDeckRemoveAtIndex(playerID,index) {
 	game.playerDecks[playerID].splice(index, 1);
 	updatePlayerDeck(playerID);
 }
@@ -378,6 +379,7 @@ function dragCardStart(e) {
 	}
 	
 	while (document.getElementsByClassName("userDrag").length > 0) {
+		document.getElementsByClassName("userDrag").srcElement.style.display = "block";
 		document.getElementsByClassName("userDrag")[0].innerHTML = "";
 		document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
 	}
@@ -389,6 +391,8 @@ function dragCardStart(e) {
 	card.style.top = e.y - 32 + "px";
 	card.style.transform = e.srcElement.style.transform;
 	card.classList.add("userDrag");
+	
+	e.srcElement.style.display = "none";
 	//card.style.transition = "rotate 1s";
 	
 	e.card = card.id;
@@ -396,7 +400,10 @@ function dragCardStart(e) {
 	//document.getElementById(userDrag.card).style.transition = "all 1s";
 	//document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
 	
-	userDrag = JSON.parse(JSON.stringify(e));
+	userDrag = e;
+	document.getElementsByClassName("userDrag").srcElement = e.srcElement;
+	document.getElementsByClassName("userDrag").card = card.id;
+	document.getElementsByClassName("userDrag").deck = e.srcElement.parentNode.id;
 }
 
 document.addEventListener("mousemove", function (e) {
@@ -420,9 +427,21 @@ document.addEventListener("mousemove", function (e) {
 document.addEventListener("mouseup", function (e) {	
 	if (userDrag) {
 		document.getElementById(userDrag.card).style.transition = "all .3s";
-		document.getElementById(userDrag.card).style.left = 0 + "px";
-		document.getElementById(userDrag.card).style.top = 0 + "px";
+		document.getElementById(userDrag.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
+		document.getElementById(userDrag.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
 		document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+		
+		if (document.getElementsByClassName("userDrag").deck != "stock" && document.getElementsByClassName("userDrag").deck != "discard") {
+			playerDeckRemoveAtIndex(document.getElementsByClassName("userDrag").deck,parseInt(document.getElementsByClassName("userDrag").card.split("@",1)[1]));
+		}
+		
+		setTimeout(function () {
+			document.getElementsByClassName("userDrag").srcElement.style.display = "block";
+			while (document.getElementsByClassName("userDrag").length > 0) {
+				document.getElementsByClassName("userDrag")[0].innerHTML = "";
+				document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+			}
+		},300);
 		
 		userDrag = null;
 	}
@@ -472,3 +491,53 @@ function shuffle(b) {
     }
     return a;
 }
+
+//Server stuff
+
+sVars = { //server varaibles
+	players: [
+		{
+			name: "You",
+			id: Math.random().toString(16).substr(2),
+			wins: 0,
+			games: 0,
+			isuser: true,
+		},	
+	],
+},
+
+socket = {
+	emit:function (request, data) {
+		socket.onfuncs[request](data);
+	},
+	on:function (request, func) {
+		socket.onfuncs[request] = func;
+	},
+	onfuncs:{
+		
+	},
+}
+
+socket.on("testRequest",function (data) {
+	alert("Hello "+data.name);
+});
+
+socket.on("playerJoin",function (data) {
+	sVars.players.push({
+		name: data.name,
+		id: Math.random().toString(16).substr(2)+Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	});
+});
+
+socket.on("getPlayerList",function (data) {
+	sVars.players.push({
+		name: data.name,
+		id: Math.random().toString(16).substr(2)+Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	});
+});
+
+//socket.emit("testRequest",{id:01100101, name:"working internal server!"});

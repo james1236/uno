@@ -77,8 +77,16 @@
 	}
 
 	/* Pick on hover */
+	/*on all cardPicks with a card-inner, when cardPick is hovered, card-inner is given these styles*/
 	.cardPick:hover .card-inner {
 		top:-7px;
+		transform: rotateY(180deg);
+		transform: rotate(5deg);
+		transition: all .1s;
+	}
+	
+	.cardSplitLeft:hover .card-inner {
+		left:-7px;
 		transform: rotateY(180deg);
 		transform: rotate(5deg);
 		transition: all .1s;
@@ -88,7 +96,7 @@
 	.cardFlip:hover .card-inner {
 		transform: rotateY(180deg);
 		transition: all .2s;
-	}		
+	}
 
 	/* Position the front and back side */
 	.card-front, .card-back {
