@@ -7,9 +7,9 @@ var backgroundTimer = 0;
 //var backgroundGradient1 = [0,42,255,0.5];
 //var backgroundGradient2 = [63,94,251,0.5];
 //var backgroundGradient3 = [120,229,238,0.5];
-var backgroundGradient1 = [63, 94, 251,0.25];
-var backgroundGradient2 = [63, 94, 251,0.25];
-var backgroundGradient3 = [252, 70, 107,0.25];
+var backgroundGradient1 = [63, 94, 251,0.5];
+var backgroundGradient2 = [63, 94, 251,0.5];
+var backgroundGradient3 = [252, 70, 107,0.5];
 
 var gradientInterpolation = [0,0,100];
 
@@ -419,7 +419,7 @@ document.addEventListener("mousemove", function (e) {
 
 document.addEventListener("mouseup", function (e) {	
 	if (userDrag) {
-		document.getElementById(userDrag.card).style.transition = "all .6s";
+		document.getElementById(userDrag.card).style.transition = "all .3s";
 		document.getElementById(userDrag.card).style.left = 0 + "px";
 		document.getElementById(userDrag.card).style.top = 0 + "px";
 		document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
