@@ -37,6 +37,15 @@ function getPlayerById(id) {
 	return false;
 }
 
+function getPlayerIndexById(id) {
+	for (var i = 0; i < players.length; i++) {
+		if (players[i].id == id) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 //Temp game info that gets reset every round
 var game = {
 	stockPile: [],
@@ -223,7 +232,7 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 	deck.className = "deck";
 	deck.id = playerID;
 	
-	for (index = game.playerDecks[playerID].length-1; index > -1; index--) {
+	for (index = 0; index < game.playerDecks[playerID].length; index++) {
 		if (getPlayerById(playerID).isuser) {
 			card = generateCard(game.playerDecks[playerID][index],index);
 			card.classList.add("cardPick");
@@ -231,17 +240,26 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 			card = generateCard("back",index);
 		}
 		
-		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)))+90;
+		//bearing for an individual of the deck card based on a center of 0deg
+		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)));
 		
-		card.style.left = "calc(50% + "+((Math.cos((bearing)*Math.PI/180)*radius))+"px)";
 		
-		if (getPlayerById(playerID).isuser) {
-			card.style.bottom = 48+(Math.sin((bearing)*Math.PI/180)*radius)-radius+"px";
-			card.style.transform = "rotate("+(-bearing+90)+"deg)";
+		if (getPlayerById(playerID).isuser) {			
+			//                  	translate
+			card.style.top = (window.innerHeight-48-64)+(Math.sin((bearing+270)*Math.PI/180)*radius)+radius+"px";
+			
+			card.style.transform = "rotate("+(bearing-((360/players.length)*getPlayerIndexById(playerID)))+"deg)";
+			
+			card.style.left = "calc(50% + "+((Math.cos((bearing+270)*Math.PI/180)*radius))+"px)";
 		} else {
-			card.style.top = 48+(Math.sin((bearing)*Math.PI/180)*radius)-radius+"px";
-			card.style.transform = "rotate("+(90+bearing)+"deg)";
+			
+			card.style.top = 48+(Math.sin((bearing+90)*Math.PI/180)*radius)-radius+"px";
+			
+			card.style.transform = "rotate("+(bearing-((360/players.length)*getPlayerIndexById(playerID)))+"deg)";
+			
+			card.style.left = "calc(50% + "+((Math.cos((bearing+90)*Math.PI/180)*radius))+"px)";
 		}
+		
 		deck.appendChild(card);
 	}
 	
@@ -458,14 +476,15 @@ document.addEventListener("mousemove", function (e) {
 
 document.addEventListener("mouseup", function (e) {	
 	if (userDrag) {
-		if (document.getElementsByClassName("userDrag")[0].deck != "stock" && returnInRange()) {
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transition = "all .25s";
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.left = document.getElementsByClassName("userDrag")[0].srcElement.style.left;
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.top = (window.innerHeight - 64 - parseInt(document.getElementsByClassName("userDrag")[0].srcElement.style.bottom,10))+"px";
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transform = document.getElementsByClassName("userDrag")[0].srcElement.style.transform;
+		userDragElm = document.getElementsByClassName("userDrag")[0];
+		if (userDragElm.deck != "stock" && returnInRange()) {
+			document.getElementById(userDragElm.card).style.transition = "all .25s";
+			document.getElementById(userDragElm.card).style.left = userDragElm.srcElement.style.left;
+			document.getElementById(userDragElm.card).style.top = userDragElm.srcElement.style.top;
+			document.getElementById(userDragElm.card).style.transform = userDragElm.srcElement.style.transform;
 			
 			setTimeout(function () {
-				document.getElementsByClassName("userDrag")[0].srcElement.style.display = "block";
+				userDragElm.srcElement.style.display = "block";
 				while (document.getElementsByClassName("userDrag").length > 0) {
 					document.getElementsByClassName("userDrag")[0].innerHTML = "";
 					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
@@ -474,22 +493,22 @@ document.addEventListener("mouseup", function (e) {
 			
 			userDrag = false;
 		} else {
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transition = "all .5s";
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
-			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transform = "rotate(0deg)";
+			document.getElementById(userDragElm.card).style.transition = "all .5s";
+			document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
+			document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
+			document.getElementById(userDragElm.card).style.transform = "rotate(0deg)";
 			
-			if (document.getElementsByClassName("userDrag")[0].deck != "stock" && document.getElementsByClassName("userDrag")[0].deck != "discard") {
-				playerDeckRemoveAtIndex(document.getElementsByClassName("userDrag")[0].deck,parseInt(document.getElementsByClassName("userDrag")[0].srcElement.id.split("@")[1]));
+			if (userDragElm.deck != "stock" && userDragElm.deck != "discard") {
+				playerDeckRemoveAtIndex(userDragElm.deck,parseInt(userDragElm.srcElement.id.split("@")[1]));
 			}
 			
 			//document.getElementById(userDrag.card).style.transition += "translate";
-			if (document.getElementsByClassName("userDrag")[0].srcElement.id.indexOf("stock") != -1) {
-				document.getElementById(document.getElementsByClassName("userDrag")[0].card).classList.add("cardFlip");
+			if (userDragElm.srcElement.id.indexOf("stock") != -1) {
+				document.getElementById(userDragElm.card).classList.add("cardFlip");
 			}
 			
 			setTimeout(function () {
-				document.getElementsByClassName("userDrag")[0].srcElement.style.display = "block";
+				userDragElm.srcElement.style.display = "block";
 				while (document.getElementsByClassName("userDrag").length > 0) {
 					document.getElementsByClassName("userDrag")[0].innerHTML = "";
 					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
