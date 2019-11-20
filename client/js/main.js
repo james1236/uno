@@ -240,25 +240,27 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 			card = generateCard("back",index);
 		}
 		
-		//bearing for an individual of the deck card based on a center of 0deg
+		//Bearing for an individual card of the deck based on a center of 0deg
 		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)));
 		
+		//The rotation around the board for a given player
+		playerRotation = ((360/players.length)*getPlayerIndexById(playerID));
 		
+		//Used to calculate the Y positions around the curve for the deck
+		topThing = (Math.sin((bearing+270-playerRotation)*Math.PI/180)*radius);
+		
+		//Translate decks to correct on screen position
 		if (getPlayerById(playerID).isuser) {			
-			//                  	translate
-			card.style.top = (window.innerHeight-48-64)+(Math.sin((bearing+270)*Math.PI/180)*radius)+radius+"px";
-			
-			card.style.transform = "rotate("+(bearing-((360/players.length)*getPlayerIndexById(playerID)))+"deg)";
-			
-			card.style.left = "calc(50% + "+((Math.cos((bearing+270)*Math.PI/180)*radius))+"px)";
+			card.style.top = (window.innerHeight-48-64)+topThing+radius+"px";
 		} else {
-			
-			card.style.top = 48+(Math.sin((bearing+90)*Math.PI/180)*radius)-radius+"px";
-			
-			card.style.transform = "rotate("+(bearing-((360/players.length)*getPlayerIndexById(playerID)))+"deg)";
-			
-			card.style.left = "calc(50% + "+((Math.cos((bearing+90)*Math.PI/180)*radius))+"px)";
+			card.style.top = 48+topThing-radius+"px";
 		}
+		
+		//The rotation for each card
+		card.style.transform = "rotate("+(bearing-playerRotation)+"deg)";
+		
+		//Used to calculate the X positions around the curve for the deck
+		card.style.left = "calc(50% + "+((Math.cos((bearing+270-playerRotation)*Math.PI/180)*radius))+"px)";
 		
 		deck.appendChild(card);
 	}
