@@ -25,7 +25,30 @@ var players = [
 		id: Math.random().toString(16).substr(2),
 		wins: 0,
 		games: 0,
-	},
+	},	
+	{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	},		
+	{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	},	
+	{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	},		{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	},	
 ];
 
 function getPlayerById(id) {
@@ -55,7 +78,7 @@ var game = {
 
 //Temp game setup info that exists for a session
 var config = {
-	maxCardsPerHand: 7,
+	maxCardsPerHand: 1,
 }
 
 var referenceDeck = [];
@@ -231,6 +254,7 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 	deck = document.createElement("div");
 	deck.className = "deck";
 	deck.id = playerID;
+
 	
 	for (index = 0; index < game.playerDecks[playerID].length; index++) {
 		if (getPlayerById(playerID).isuser) {
@@ -240,32 +264,35 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 			card = generateCard("back",index);
 		}
 		
-		//Bearing for an individual card of the deck based on a center of 0deg
-		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)));
-		
 		//The rotation around the board for a given player
-		playerRotation = ((360/players.length)*getPlayerIndexById(playerID));
+		playerRotation = (360/players.length)*getPlayerIndexById(playerID);
 		
+		
+		
+		
+		//The circle angle at which to draw the card
+		bearing = (index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2))-playerRotation-270;
+		bearingCenter = (((game.playerDecks[playerID].length-1)/2)*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2))-playerRotation-270;
+
 		//Used to calculate the Y positions around the curve for the deck
-		topThing = (Math.sin((bearing+270-playerRotation)*Math.PI/180)*radius);
-		
-		//Translate decks to correct on screen position
-		if (getPlayerById(playerID).isuser) {			
-			card.style.top = (window.innerHeight-48-64)+topThing+radius+"px";
-		} else {
-			card.style.top = 48+topThing-radius+"px";
-		}
+		topThing =  Math.sin(rad(bearingCenter))*(radius*2)-(Math.sin(rad(bearing))*(radius*2))-32;
+		leftThing = Math.cos(rad(bearingCenter))*(radius*2)-(Math.cos(rad(bearing))*(radius*2))-24;
 		
 		//The rotation for each card
-		card.style.transform = "rotate("+(bearing-playerRotation)+"deg)";
+		card.style.transform = "rotate("+(bearing+270)+"deg)";
 		
 		//Used to calculate the X positions around the curve for the deck
-		card.style.left = "calc(50% + "+((Math.cos((bearing+270-playerRotation)*Math.PI/180)*radius))+"px)";
+		card.style.top = "calc(50% + "+topThing+"px";
+		card.style.left = "calc(50% + "+leftThing+"px)";
 		
 		deck.appendChild(card);
 	}
 	
 	board.appendChild(deck);
+}
+
+function rad(angle) {
+	return angle * (Math.PI / 180);
 }
 
 function generateStockPile() {
@@ -275,12 +302,12 @@ function generateStockPile() {
 	
 	stockPlaceholder = generateCard("back","stockPlaceholder");
 	stockPlaceholder.style.top = "calc(50% - 32px)";
-	stockPlaceholder.style.left = "calc(50% - 24px - 10px)";	
+	stockPlaceholder.style.left = "calc(50% - 24px - 36px)";	
 	stockPlaceholder.classList.add("cardPick");
 	
 	stockPlaceholder2 = generateCard("back","stockPlaceholder2");
 	stockPlaceholder2.style.top = "calc(50% - 32px)";
-	stockPlaceholder2.style.left = "calc(50% - 24px - 10px)";
+	stockPlaceholder2.style.left = "calc(50% - 24px - 36px)";
 	
 	stock.appendChild(stockPlaceholder2);
 	stock.appendChild(stockPlaceholder);
@@ -294,7 +321,7 @@ function generateDiscardPile() {
 	
 	discardPlaceholder = generateCard(game.discardPile[game.discardPile.length-1],"discardPlaceholder");
 	discardPlaceholder.style.top = "calc(50% - 32px)";
-	discardPlaceholder.style.left = "calc(50% + 24px + 10px)";
+	discardPlaceholder.style.left = "calc(50% - 24px + 36px)";
 	discardPlaceholder.classList.add("discardPlaceholder");
 	
 	discard.appendChild(discardPlaceholder);
@@ -599,11 +626,11 @@ function shuffle(b) {
 }
 
 //Fan test
-/*setInterval(function () {
+setInterval(function () {
 	config.maxCardsPerHand++;
 	if (config.maxCardsPerHand > 50) {
 		config.maxCardsPerHand = 1;
 	}
 	
 	createGame();
-},500);*/
+},500);
