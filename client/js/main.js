@@ -1,17 +1,15 @@
+var socket = io();
+
 var board = document.getElementById("board")
 var backgroundRotation = 0;
 var backgroundTimer = 0;
-//var backgroundGradient1 = [107,120,177,0.25];
-//var backgroundGradient2 = [107,120,177,0.25];
-//var backgroundGradient3 = [51,71,177,0.25];
-//var backgroundGradient1 = [0,42,255,0.5];
-//var backgroundGradient2 = [63,94,251,0.5];
-//var backgroundGradient3 = [120,229,238,0.5];
-var backgroundGradient1 = [63, 94, 251,0.5];
+var backgroundGradient1 = [63, 94, 251,0.5]; //unused extra gradient point
 var backgroundGradient2 = [63, 94, 251,0.5];
 var backgroundGradient3 = [252, 70, 107,0.5];
-
 var gradientInterpolation = [0,0,100];
+
+var gameState = "notStarted";
+var userDrag = false;
 
 //This is "permenant" server side info
 var players = [
@@ -49,24 +47,13 @@ var game = {
 //Temp game setup info that exists for a session
 var config = {
 	maxCardsPerHand: 7,
-	 
 }
 
-//Fan test
-/* setInterval(function () {
-	config.maxCardsPerHand++;
-	if (config.maxCardsPerHand > 40) {
-		config.maxCardsPerHand = 1;
-	}
-	
-	createGame();
-},500);*/
-
-
 var referenceDeck = [];
-var colors = ["red","yellow","green","blue"];
+generateReferenceDeck();
 
 function generateReferenceDeck() {
+	colors = ["red","yellow","green","blue"];
 	for (color = 0; color < colors.length; color++) {
 		referenceDeck.push(colors[color]+"-0");
 		for (rep = 0; rep < 2; rep++) {
@@ -85,8 +72,8 @@ function generateReferenceDeck() {
 }
 
 generateReferenceDeck();
-createGame();
 
+createGame();
 
 function createGame() {
 	clearBoard();
@@ -96,26 +83,26 @@ function createGame() {
 		game.playerDecks[player.id] = [];
 	}
 	
-	if (!deal(config.maxCardsPerHand)) {
+	if (config.maxCardsPerHand > 0 && !deal(config.maxCardsPerHand)) {
 		alert("Too many players");
 	}
 	generateStockPile();
 	generateDiscardPile();
 	generatePlayerDecks();
+	setGameState("yourTurn");
 }
 
 function deal(cardsPerHand) {
 	savedStockPile = JSON.parse(JSON.stringify(game.stockPile));
 	savedPlayerDecks = JSON.parse(JSON.stringify(game.playerDecks));
-	
+
 	for (rep = 0; rep < cardsPerHand; rep++) {
 		for (player of players) {
 			if (game.stockPile.length <= 10) {
 				//Not enough cards/too many players to get equal cards, try again with one less per player
 				game.stockPile = JSON.parse(JSON.stringify(savedStockPile));
 				game.playerDecks = JSON.parse(JSON.stringify(savedPlayerDecks));
-				deal(cardsPerHand-1);
-				return false;
+				return deal(cardsPerHand-1);
 			} else {
 				game.playerDecks[player.id].push(game.stockPile.pop());
 			}
@@ -123,8 +110,7 @@ function deal(cardsPerHand) {
 	}
 	
 	game.discardPile.push(game.stockPile.pop());
-	
-	return true;
+	return cardsPerHand;
 }
 
 function generatePlayerDecks() {
@@ -133,7 +119,10 @@ function generatePlayerDecks() {
 	}
 }
 
-var gameState = "yourTurn";
+socket.on("addPlayer",function(data) { //"enqueuePlayer"
+	players.push(data.player); //When new game is started?
+	createPlayerDeck(data.player.id);
+});
 
 function setGameState(target) {
 	gameState = target;
@@ -206,7 +195,8 @@ function drawUnitCircle() {
 	board.appendChild(circleTest);
 }
 
-function generatePlayerDeck(playerID) {
+function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (360/players.length) starting with the player deck at 0deg
+	//Calculate optimum deck curvature for it's length
 	testvar = game.playerDecks[playerID].length;
 	if (testvar < 3) {
 		testvar = 3;
@@ -216,13 +206,19 @@ function generatePlayerDeck(playerID) {
 	}
 	
 	if (testvar > 22) {
-		testvar+=2;
-		testvar = 22;
+		radius = 80000;
+		if (testvar < 38) {
+			radius = 80000;
+			deckSeperation = 0.0125;
+		} else {
+			deckSeperation = 0.0075;
+		}
+	} else {
+		radius = 500*(Math.pow(testvar/20,2))*3;
+		deckSeperation = ((60.5-testvar)*30)/radius;
 	}
 	
-	radius = 500*(Math.pow(testvar/20,2))*3;
-	deckSeperation = ((60.5-testvar)*30)/radius;
-	
+	//Generate DOM deck
 	deck = document.createElement("div");
 	deck.className = "deck";
 	deck.id = playerID;
@@ -234,8 +230,6 @@ function generatePlayerDeck(playerID) {
 		} else {
 			card = generateCard("back",index);
 		}
-
-		//card.style.left = "calc(50% + "+((index*deckSeperation-(deckSeperation*game.playerDecks[playerID].length/2)))+"px)";
 		
 		bearing = ((index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2)))+90;
 		
@@ -354,13 +348,13 @@ function generateCard(cardType,index) {
 	
 	cardOuter.appendChild(card);
 	
-	var isColored = true;
 	var overlaySrc;
 	var underlaySrc;
 	
 	if (cardType.indexOf("-") == -1) {
 		isColored = false;
 		overlaySrc = cardType;
+		underlaySrc = "black";
 	} else {
 		typeSplit = cardType.split("-");
 		underlaySrc = typeSplit[0];
@@ -380,13 +374,11 @@ function generateCard(cardType,index) {
 	
 	cardFront.appendChild(cardOverlay);
 	
-	if (isColored) {
-		cardUnderlay = document.createElement("img");
-		cardUnderlay.className = "cardUnderlay";
-		cardUnderlay.src = underlaySrc;
-		
-		cardFront.appendChild(cardUnderlay);
-	}
+	cardUnderlay = document.createElement("img");
+	cardUnderlay.className = "cardUnderlay";
+	cardUnderlay.src = underlaySrc;
+	
+	cardFront.appendChild(cardUnderlay);
 	
 	card.appendChild(cardFront);
 	
@@ -404,7 +396,6 @@ function generateCard(cardType,index) {
 	return cardOuter;
 }
 
-var userDrag;
 var mouseX = 0;
 var mouseY = 0;
 
@@ -415,8 +406,9 @@ function dragCardStart(e) {
 		return;
 	}
 	
+	//Remove any previous userDrag elements
 	while (document.getElementsByClassName("userDrag").length > 0) {
-		document.getElementsByClassName("userDrag").srcElement.style.display = "block";
+		document.getElementsByClassName("userDrag")[0].srcElement.style.display = "block";
 		document.getElementsByClassName("userDrag")[0].innerHTML = "";
 		document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
 	}
@@ -437,15 +429,13 @@ function dragCardStart(e) {
 	e.srcElement.style.display = "none";
 	//card.style.transition = "rotate 1s";
 	
-	e.card = card.id;
-	
 	//document.getElementById(userDrag.card).style.transition = "all 1s";
 	//document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
 	
-	userDrag = e;
-	document.getElementsByClassName("userDrag").srcElement = e.srcElement;
-	document.getElementsByClassName("userDrag").card = card.id;
-	document.getElementsByClassName("userDrag").deck = e.srcElement.parentNode.id;
+	userDrag = true;
+	document.getElementsByClassName("userDrag")[0].srcElement = e.srcElement;
+	document.getElementsByClassName("userDrag")[0].card = card.id;
+	document.getElementsByClassName("userDrag")[0].deck = e.srcElement.parentNode.id;
 }
 
 document.addEventListener("mousemove", function (e) {
@@ -458,80 +448,72 @@ document.addEventListener("mousemove", function (e) {
 	}
 	
 	if (userDrag) {
-		document.getElementById(userDrag.card).style.left = mouseX - 24 + "px";
-		document.getElementById(userDrag.card).style.top = mouseY - 32 + "px";
+		document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.left = mouseX - 24 + "px";
+		document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.top = mouseY - 32 + "px";
 		
-		document.getElementById(userDrag.card).style.transition = "transform .3s";
-		document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+		document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transition = "transform .3s";
+		document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transform = "rotate(0deg)";
 	}
 }, false);
 
 document.addEventListener("mouseup", function (e) {	
 	if (userDrag) {
-		if (document.getElementsByClassName("userDrag").deck != "stock" && returnInRange()) {
-			document.getElementById(userDrag.card).style.transition = "all .25s";
-			document.getElementById(userDrag.card).style.left = document.getElementsByClassName("userDrag").srcElement.style.left;
-			document.getElementById(userDrag.card).style.top = (window.innerHeight - 64 - parseInt(document.getElementsByClassName("userDrag").srcElement.style.bottom,10))+"px";
-			document.getElementById(userDrag.card).style.transform = document.getElementsByClassName("userDrag").srcElement.style.transform;
+		if (document.getElementsByClassName("userDrag")[0].deck != "stock" && returnInRange()) {
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transition = "all .25s";
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.left = document.getElementsByClassName("userDrag")[0].srcElement.style.left;
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.top = (window.innerHeight - 64 - parseInt(document.getElementsByClassName("userDrag")[0].srcElement.style.bottom,10))+"px";
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transform = document.getElementsByClassName("userDrag")[0].srcElement.style.transform;
 			
 			setTimeout(function () {
-				document.getElementsByClassName("userDrag").srcElement.style.display = "block";
+				document.getElementsByClassName("userDrag")[0].srcElement.style.display = "block";
 				while (document.getElementsByClassName("userDrag").length > 0) {
 					document.getElementsByClassName("userDrag")[0].innerHTML = "";
 					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
 				}
 			},250);
 			
-			userDrag = null;
+			userDrag = false;
 		} else {
-			document.getElementById(userDrag.card).style.transition = "all .5s";
-			document.getElementById(userDrag.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
-			document.getElementById(userDrag.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
-			document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transition = "all .5s";
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
+			document.getElementById(document.getElementsByClassName("userDrag")[0].card).style.transform = "rotate(0deg)";
 			
-			if (document.getElementsByClassName("userDrag").deck != "stock" && document.getElementsByClassName("userDrag").deck != "discard") {
-				playerDeckRemoveAtIndex(document.getElementsByClassName("userDrag").deck,parseInt(document.getElementsByClassName("userDrag").card.split("@",1)[1]));
+			if (document.getElementsByClassName("userDrag")[0].deck != "stock" && document.getElementsByClassName("userDrag")[0].deck != "discard") {
+				playerDeckRemoveAtIndex(document.getElementsByClassName("userDrag")[0].deck,parseInt(document.getElementsByClassName("userDrag")[0].srcElement.id.split("@")[1]));
 			}
 			
 			//document.getElementById(userDrag.card).style.transition += "translate";
-			if (userDrag.srcElement.id.indexOf("stock") != -1) {
-				document.getElementById(userDrag.card).classList.add("cardFlip");
+			if (document.getElementsByClassName("userDrag")[0].srcElement.id.indexOf("stock") != -1) {
+				document.getElementById(document.getElementsByClassName("userDrag")[0].card).classList.add("cardFlip");
 			}
 			
 			setTimeout(function () {
-				document.getElementsByClassName("userDrag").srcElement.style.display = "block";
+				document.getElementsByClassName("userDrag")[0].srcElement.style.display = "block";
 				while (document.getElementsByClassName("userDrag").length > 0) {
 					document.getElementsByClassName("userDrag")[0].innerHTML = "";
 					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
 				}
 			},500);
 			
-			userDrag = null;
+			userDrag = false;
 			
 			setGameState("otherTurn");
 		}
 	}
 }, false);
 
-function playCard() {
-	
-}
-
-function returnCard() {
-	
-}
-
 
 function returnInRange() {
-	if (gameState != "yourTurn" || ((window.innerHeight - (mouseY+32))*1.25 < (mouseY+32) - (document.getElementById("back@stockPlaceholder2").getBoundingClientRect().top+32))) {
+	if (gameState != "yourTurn" || ((window.innerHeight - (mouseY+32))*2 < (mouseY+32) - (document.getElementById("back@stockPlaceholder2").getBoundingClientRect().top+32))) {
 		return true;
 	}
 	return false;
 }
 
 function moveCard(playerID,startIndex,targetIndex) {
-	if (targetIndex == startIndex) {
-		return;
+	if (targetIndex == startIndex || startIndex < 0 || targetIndex < 0 || startIndex >= game.playerDecks[playerID].length || targetIndex >= game.playerDecks[playerID].length) {
+		return false;
 	}
 	if (targetIndex < startIndex) {
 		playerDeckInsertAtIndex(playerID,game.playerDecks[playerID][startIndex],targetIndex,true);
@@ -541,6 +523,7 @@ function moveCard(playerID,startIndex,targetIndex) {
 		playerDeckRemoveAtIndex(playerID,startIndex,true);
 	}
 	updatePlayerDeck(playerID);
+	return true;
 }
 
 //https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
@@ -594,52 +577,12 @@ function shuffle(b) {
     return a;
 }
 
-//Server stuff
-
-sVars = { //server varaibles
-	players: [
-		{
-			name: "You",
-			id: Math.random().toString(16).substr(2),
-			wins: 0,
-			games: 0,
-			isuser: true,
-		},	
-	],
-},
-
-socket = {
-	emit:function (request, data) {
-		socket.onfuncs[request](data);
-	},
-	on:function (request, func) {
-		socket.onfuncs[request] = func;
-	},
-	onfuncs:{
-		
-	},
-}
-
-socket.on("testRequest",function (data) {
-	alert("Hello "+data.name);
-});
-
-socket.on("playerJoin",function (data) {
-	sVars.players.push({
-		name: data.name,
-		id: Math.random().toString(16).substr(2)+Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	});
-});
-
-socket.on("getPlayerList",function (data) {
-	sVars.players.push({
-		name: data.name,
-		id: Math.random().toString(16).substr(2)+Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	});
-});
-
-//socket.emit("testRequest",{id:01100101, name:"working internal server!"});
+//Fan test
+/*setInterval(function () {
+	config.maxCardsPerHand++;
+	if (config.maxCardsPerHand > 50) {
+		config.maxCardsPerHand = 1;
+	}
+	
+	createGame();
+},500);*/
