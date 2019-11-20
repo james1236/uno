@@ -268,15 +268,13 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 		playerRotation = (360/players.length)*getPlayerIndexById(playerID);
 		
 		
-		
-		
 		//The circle angle at which to draw the card
 		bearing = (index*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2))-playerRotation-270;
 		bearingCenter = (((game.playerDecks[playerID].length-1)/2)*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2))-playerRotation-270;
 
 		//Used to calculate the Y positions around the curve for the deck
-		topThing =  Math.sin(rad(bearingCenter))*(radius*2)-(Math.sin(rad(bearing))*(radius*2))-32;
-		leftThing = Math.cos(rad(bearingCenter))*(radius*2)-(Math.cos(rad(bearing))*(radius*2))-24;
+		topThing =  (Math.sin(rad(bearingCenter))-Math.sin(rad(bearing)))*radius-32+Math.sin(rad(bearingCenter))*(window.innerHeight/2-64);
+		leftThing = (Math.cos(rad(bearingCenter))-Math.cos(rad(bearing)))*radius-24+Math.cos(rad(bearingCenter))*(window.innerHeight/2-64);
 		
 		//The rotation for each card
 		card.style.transform = "rotate("+(bearing+270)+"deg)";
