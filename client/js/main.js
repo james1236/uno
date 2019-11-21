@@ -26,29 +26,6 @@ var players = [
 		wins: 0,
 		games: 0,
 	},	
-	{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	},		
-	{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	},	
-	{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	},		{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	},	
 ];
 
 function getPlayerById(id) {
@@ -67,6 +44,15 @@ function getPlayerIndexById(id) {
 		}
 	}
 	return -1;
+}
+
+function getUserPlayerID() {
+	for (player of players) {
+		if (player.isuser) {
+			return player.id;
+		}
+	}
+	return false;
 }
 
 //Temp game info that gets reset every round
@@ -261,10 +247,12 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 			card = generateCard(game.playerDecks[playerID][index],index);
 			card.classList.add("cardPick");
 		} else {
-			if (testvar < 38) {
-				deckSeperation = ((60.5-testvar)*30)/radius/4;
-			} else {
-				deckSeperation = ((60.5-testvar)*30)/radius/2;
+			if (players.length > 3) {
+				if (testvar < 38) {
+					deckSeperation = ((60.5-testvar)*30)/radius/4;
+				} else {
+					deckSeperation = ((60.5-testvar)*30)/radius/2;
+				}
 			}
 			card = generateCard("back",index);
 		}
@@ -278,8 +266,8 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 		bearingCenter = (((game.playerDecks[playerID].length-1)/2)*deckSeperation-(deckSeperation*(game.playerDecks[playerID].length-1)/2))-playerRotation-270;
 
 		//Used to calculate the Y positions around the curve for the deck
-		topThing =  (Math.sin(rad(bearingCenter))-Math.sin(rad(bearing)))*radius-32+Math.sin(rad(bearingCenter))*(window.innerHeight/2-64);
-		leftThing = (Math.cos(rad(bearingCenter))-Math.cos(rad(bearing)))*radius-24+Math.cos(rad(bearingCenter))*(window.innerWidth/2-64);
+		topThing =  (Math.sin(rad(bearingCenter))-Math.sin(rad(bearing)))*radius-32+Math.sin(rad(bearingCenter))*(window.innerHeight/2-64-12);
+		leftThing = (Math.cos(rad(bearingCenter))-Math.cos(rad(bearing)))*radius-24+Math.cos(rad(bearingCenter))*(window.innerWidth/2-64-12);
 		
 		//The rotation for each card
 		card.style.transform = "rotate("+(bearing+270)+"deg)";
@@ -371,6 +359,9 @@ function updatePlayerDeck(playerID) {
 }
 
 function playerDeckInsertAtIndex(playerID,cardType,index,noUpdate=false) {
+	if (index == -1) {
+		index = game.playerDecks[playerID].length;
+	}
 	game.playerDecks[playerID].splice(index, 0, cardType);
 	if (!noUpdate) {updatePlayerDeck(playerID);}
 }
@@ -457,10 +448,8 @@ function dragCardStart(e) {
 	}
 	
 	//Remove any previous userDrag elements
-	while (document.getElementsByClassName("userDrag").length > 0) {
-		document.getElementsByClassName("userDrag")[0].srcElement.style.display = "block";
-		document.getElementsByClassName("userDrag")[0].innerHTML = "";
-		document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+	if (document.getElementsByClassName("userDrag").length > 0) {
+		return;
 	}
 	
 	if (e.srcElement.id.indexOf("stock") != -1) {
@@ -507,50 +496,72 @@ document.addEventListener("mousemove", function (e) {
 }, false);
 
 document.addEventListener("mouseup", function (e) {	
+
 	if (userDrag) {
 		userDragElm = document.getElementsByClassName("userDrag")[0];
+		animationTimer = 0;
+		
 		if (userDragElm.deck != "stock" && returnInRange()) {
+			//Return to deck
+			animationTimer = 250;
 			document.getElementById(userDragElm.card).style.transition = "all .25s";
 			document.getElementById(userDragElm.card).style.left = userDragElm.srcElement.style.left;
 			document.getElementById(userDragElm.card).style.top = userDragElm.srcElement.style.top;
-			document.getElementById(userDragElm.card).style.transform = userDragElm.srcElement.style.transform;
-			
-			setTimeout(function () {
-				userDragElm.srcElement.style.display = "block";
-				while (document.getElementsByClassName("userDrag").length > 0) {
-					document.getElementsByClassName("userDrag")[0].innerHTML = "";
-					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
-				}
-			},250);
-			
-			userDrag = false;
+			document.getElementById(userDragElm.card).style.transform = userDragElm.srcElement.style.transform;		
 		} else {
-			document.getElementById(userDragElm.card).style.transition = "all .5s";
-			document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
-			document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
-			document.getElementById(userDragElm.card).style.transform = "rotate(0deg)";
-			
-			if (userDragElm.deck != "stock" && userDragElm.deck != "discard") {
-				playerDeckRemoveAtIndex(userDragElm.deck,parseInt(userDragElm.srcElement.id.split("@")[1]));
-			}
-			
-			//document.getElementById(userDrag.card).style.transition += "translate";
-			if (userDragElm.srcElement.id.indexOf("stock") != -1) {
-				document.getElementById(userDragElm.card).classList.add("cardFlip");
-			}
-			
-			setTimeout(function () {
-				userDragElm.srcElement.style.display = "block";
-				while (document.getElementsByClassName("userDrag").length > 0) {
-					document.getElementsByClassName("userDrag")[0].innerHTML = "";
-					document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+			if (userDragElm.deck == "stock") {
+				cardTypeToAdd = game.stockPile.pop();
+				console.log(cardTypeToAdd);
+				playerDeckInsertAtIndex(getUserPlayerID(),cardTypeToAdd,-1);
+				
+				targetDeck = document.getElementById(getUserPlayerID());
+				for (target of targetDeck.childNodes) {
+					console.log(target.id);
+					if (target.id == (cardTypeToAdd+"@"+(game.playerDecks[getUserPlayerID()].length-1))) {
+						userDragElm.targetElement = target;
+						break;
+					}
 				}
-			},500);
-			
-			userDrag = false;
+				
+				userDragElm.style.opacity = 0.5;
+				userDragElm.targetElement.style.display = "none";
+				userDragElm.style.zIndex = "9999";
+				
+				document.getElementById(userDragElm.card).classList.add("cardFlip");
+				
+				animationTimer = 500;
+				document.getElementById(userDragElm.card).style.transition = "all .5s";
+				document.getElementById(userDragElm.card).style.left = userDragElm.targetElement.style.left;
+				document.getElementById(userDragElm.card).style.top = userDragElm.targetElement.style.top;
+				document.getElementById(userDragElm.card).style.transform = userDragElm.targetElement.style.transform;		
+			} else {
+				animationTimer = 500;
+				document.getElementById(userDragElm.card).style.transition = "all .5s";
+				document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
+				document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
+				document.getElementById(userDragElm.card).style.transform = "rotate(0deg)";
+				
+				if (userDragElm.deck != "stock" && userDragElm.deck != "discard") {
+					playerDeckRemoveAtIndex(userDragElm.deck,parseInt(userDragElm.srcElement.id.split("@")[1]));
+				}
+			}
 			
 			setGameState("otherTurn");
 		}
+		
+		//Remove userDrag element
+		setTimeout(function () {
+			userDragElm.srcElement.style.display = "block";
+			while (document.getElementsByClassName("userDrag").length > 0) {
+				if (document.getElementsByClassName("userDrag")[0].targetElement) {
+					document.getElementsByClassName("userDrag")[0].targetElement.style.display = "block";
+				}
+				document.getElementsByClassName("userDrag")[0].innerHTML = "";
+				document.getElementsByClassName("userDrag")[0].parentNode.removeChild(document.getElementsByClassName("userDrag")[0]);
+			}
+		},animationTimer);
+		
+		userDrag = false;
 	}
 }, false);
 
