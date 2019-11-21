@@ -509,44 +509,81 @@ document.addEventListener("mouseup", function (e) {
 			document.getElementById(userDragElm.card).style.top = userDragElm.srcElement.style.top;
 			document.getElementById(userDragElm.card).style.transform = userDragElm.srcElement.style.transform;		
 		} else {
-			if (userDragElm.deck == "stock") {
-				cardTypeToAdd = game.stockPile.pop();
-				console.log(cardTypeToAdd);
-				playerDeckInsertAtIndex(getUserPlayerID(),cardTypeToAdd,-1);
-				
-				targetDeck = document.getElementById(getUserPlayerID());
+			if (moveInRange() && userDragElm.deck != "stock") {
+				//Move (rearrange) card within deck
+				animationTimer = 200;
+				testEEE = userDragElm.srcElement.id.split("@")[0];
+				targetDeck = document.getElementById(userDragElm.deck);
+				minIndex = 0;
+
 				for (target of targetDeck.childNodes) {
-					console.log(target.id);
-					if (target.id == (cardTypeToAdd+"@"+(game.playerDecks[getUserPlayerID()].length-1))) {
+					reveal = false;
+					if (target.style.display == "none") {
+						target.style.display = "block";
+						reveal = true;
+					}
+
+					if (mouseX > target.offsetLeft) {
+						minIndex = parseInt(target.id.split("@")[1],10);
+					}
+					if (reveal) {
+						target.style.display = "none";
+					}
+				}
+				endIndex = moveCard(userDragElm.deck,parseInt(userDragElm.srcElement.id.split("@")[1]),minIndex);
+				targetDeck = document.getElementById(userDragElm.deck);
+				
+				for (target of targetDeck.childNodes) {
+					if (target.id == (userDragElm.srcElement.id.split("@")[0]+"@"+endIndex)) {
+						console.log(target);
 						userDragElm.targetElement = target;
-						break;
 					}
 				}
 				
-				userDragElm.style.opacity = 0.5;
 				userDragElm.targetElement.style.display = "none";
-				userDragElm.style.zIndex = "9999";
-				
-				document.getElementById(userDragElm.card).classList.add("cardFlip");
-				
-				animationTimer = 500;
-				document.getElementById(userDragElm.card).style.transition = "all .5s";
+				document.getElementById(userDragElm.card).style.transition = "all .2s";
 				document.getElementById(userDragElm.card).style.left = userDragElm.targetElement.style.left;
 				document.getElementById(userDragElm.card).style.top = userDragElm.targetElement.style.top;
 				document.getElementById(userDragElm.card).style.transform = userDragElm.targetElement.style.transform;		
 			} else {
-				animationTimer = 500;
-				document.getElementById(userDragElm.card).style.transition = "all .5s";
-				document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
-				document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
-				document.getElementById(userDragElm.card).style.transform = "rotate(0deg)";
-				
-				if (userDragElm.deck != "stock" && userDragElm.deck != "discard") {
+				if (userDragElm.deck == "stock") {
+					//Take from stockPile
+					cardTypeToAdd = game.stockPile.pop();
+					console.log(cardTypeToAdd);
+					playerDeckInsertAtIndex(getUserPlayerID(),cardTypeToAdd,-1);
+					
+					targetDeck = document.getElementById(getUserPlayerID());
+					for (target of targetDeck.childNodes) {
+						if (target.id == (cardTypeToAdd+"@"+(game.playerDecks[getUserPlayerID()].length-1))) {
+							userDragElm.targetElement = target;
+							break;
+						}
+					}
+					
+					userDragElm.style.opacity = 0.5;
+					userDragElm.targetElement.style.display = "none";
+					userDragElm.style.zIndex = "9999";
+					
+					document.getElementById(userDragElm.card).classList.add("cardFlip");
+					
+					animationTimer = 600;
+					document.getElementById(userDragElm.card).style.transition = "all .6s";
+					document.getElementById(userDragElm.card).style.left = userDragElm.targetElement.style.left;
+					document.getElementById(userDragElm.card).style.top = userDragElm.targetElement.style.top;
+					document.getElementById(userDragElm.card).style.transform = userDragElm.targetElement.style.transform;		
+				} else {
+					//Play card (add to discardPile)
+					animationTimer = 500;
+					document.getElementById(userDragElm.card).style.transition = "all .5s";
+					document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
+					document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
+					document.getElementById(userDragElm.card).style.transform = "rotate(0deg)";
+					
 					playerDeckRemoveAtIndex(userDragElm.deck,parseInt(userDragElm.srcElement.id.split("@")[1]));
 				}
+				
+				setGameState("otherTurn");
 			}
-			
-			setGameState("otherTurn");
 		}
 		
 		//Remove userDrag element
@@ -567,15 +604,23 @@ document.addEventListener("mouseup", function (e) {
 
 
 function returnInRange() {
-	if (gameState != "yourTurn" || ((window.innerHeight - (mouseY+32))*2 < (mouseY+32) - (document.getElementById("back@stockPlaceholder2").getBoundingClientRect().top+32))) {
+	if (!moveInRange() && (gameState != "yourTurn" || ((window.innerHeight - (mouseY+32))*2 < (mouseY+32) - (document.getElementById("back@stockPlaceholder2").getBoundingClientRect().top+32)))) {
+		return true;
+	}
+	return false;
+}
+
+function moveInRange() {
+	if (mouseY > (window.innerHeight-64-48)) {
 		return true;
 	}
 	return false;
 }
 
 function moveCard(playerID,startIndex,targetIndex) {
-	if (targetIndex == startIndex || startIndex < 0 || targetIndex < 0 || startIndex >= game.playerDecks[playerID].length || targetIndex >= game.playerDecks[playerID].length) {
-		return false;
+	var endIndex = targetIndex;
+	if (targetIndex == startIndex || startIndex < 0 || targetIndex < 0 || startIndex > game.playerDecks[playerID].length || targetIndex > game.playerDecks[playerID].length) {
+		return endIndex;
 	}
 	if (targetIndex < startIndex) {
 		playerDeckInsertAtIndex(playerID,game.playerDecks[playerID][startIndex],targetIndex,true);
@@ -583,9 +628,10 @@ function moveCard(playerID,startIndex,targetIndex) {
 	} else {
 		playerDeckInsertAtIndex(playerID,game.playerDecks[playerID][startIndex],targetIndex,true);
 		playerDeckRemoveAtIndex(playerID,startIndex,true);
+		endIndex = targetIndex-1;
 	}
 	updatePlayerDeck(playerID);
-	return true;
+	return endIndex;
 }
 
 //https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
