@@ -48,22 +48,6 @@ var players = [
 		id: Math.random().toString(16).substr(2),
 		wins: 0,
 		games: 0,
-	},		{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	},	
-	{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
-	},		{
-		name: "P2",
-		id: Math.random().toString(16).substr(2),
-		wins: 0,
-		games: 0,
 	},	
 ];
 
@@ -295,7 +279,7 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 
 		//Used to calculate the Y positions around the curve for the deck
 		topThing =  (Math.sin(rad(bearingCenter))-Math.sin(rad(bearing)))*radius-32+Math.sin(rad(bearingCenter))*(window.innerHeight/2-64);
-		leftThing = (Math.cos(rad(bearingCenter))-Math.cos(rad(bearing)))*radius-24+Math.cos(rad(bearingCenter))*(window.innerHeight/2-64);
+		leftThing = (Math.cos(rad(bearingCenter))-Math.cos(rad(bearing)))*radius-24+Math.cos(rad(bearingCenter))*(window.innerWidth/2-64);
 		
 		//The rotation for each card
 		card.style.transform = "rotate("+(bearing+270)+"deg)";
