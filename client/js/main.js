@@ -48,6 +48,22 @@ var players = [
 		id: Math.random().toString(16).substr(2),
 		wins: 0,
 		games: 0,
+	},		{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	},	
+	{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
+	},		{
+		name: "P2",
+		id: Math.random().toString(16).substr(2),
+		wins: 0,
+		games: 0,
 	},	
 ];
 
@@ -261,6 +277,11 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 			card = generateCard(game.playerDecks[playerID][index],index);
 			card.classList.add("cardPick");
 		} else {
+			if (testvar < 38) {
+				deckSeperation = ((60.5-testvar)*30)/radius/4;
+			} else {
+				deckSeperation = ((60.5-testvar)*30)/radius/2;
+			}
 			card = generateCard("back",index);
 		}
 		
