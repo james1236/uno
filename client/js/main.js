@@ -78,7 +78,7 @@ var game = {
 
 //Temp game setup info that exists for a session
 var config = {
-	maxCardsPerHand: 1,
+	maxCardsPerHand: 7,
 }
 
 var referenceDeck = [];
@@ -629,11 +629,11 @@ function shuffle(b) {
 }
 
 //Fan test
-setInterval(function () {
+/*setInterval(function () {
 	config.maxCardsPerHand++;
 	if (config.maxCardsPerHand > 50) {
 		config.maxCardsPerHand = 1;
 	}
 	
 	createGame();
-},500);
+},500);*/
