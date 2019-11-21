@@ -177,6 +177,10 @@ function setGameState(target) {
 	}
 }
 
+function updateGameState() {
+	setGameState(gameState);
+}
+
 function drawUnitCircle() {
 	if (document.getElementById("circleTest")) {
 		circleTest = document.getElementById("circleTest");
@@ -277,6 +281,10 @@ function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (
 		card.style.left = "calc(50% + "+leftThing+"px)";
 		
 		deck.appendChild(card);
+	}
+	
+	if (getUserPlayerID() == playerID && gameState == "otherTurn") {
+		deck.style.opacity = 0.5;
 	}
 	
 	board.appendChild(deck);
@@ -443,7 +451,7 @@ var mouseY = 0;
 function dragCardStart(e) {
 	e.preventDefault();
 	
-	if (e.srcElement.id.indexOf("userDrag") != -1 || !e.srcElement.classList.contains("cardPick")) {
+	if (e.srcElement.id.indexOf("userDrag") != -1 || (!e.srcElement.classList.contains("cardPick") && !e.srcElement.classList.contains("cardTease"))) {
 		return;
 	}
 	
@@ -453,9 +461,14 @@ function dragCardStart(e) {
 	}
 	
 	if (e.srcElement.id.indexOf("stock") != -1) {
+		//Stock pile
+		if (e.srcElement.classList.contains("cardTease")) {
+			return; //Disallow taking cards while stock pile has the "tease" animation
+		}
 		card = generateCard(game.stockPile[game.stockPile.length-1],"userDrag");
 		card.classList.add("cardNeutral");
 	} else {
+		//Other pile/deck (namely user deck)
 		card = generateCard(e.srcElement.id.split("@",1)[0],"userDrag");
 	}
 	board.appendChild(card);
@@ -475,6 +488,10 @@ function dragCardStart(e) {
 	document.getElementsByClassName("userDrag")[0].srcElement = e.srcElement;
 	document.getElementsByClassName("userDrag")[0].card = card.id;
 	document.getElementsByClassName("userDrag")[0].deck = e.srcElement.parentNode.id;
+	
+	if (getUserPlayerID() == e.srcElement.parentNode.id && gameState == "otherTurn") {
+		document.getElementsByClassName("userDrag")[0].style.opacity = 0.5;
+	}
 }
 
 document.addEventListener("mousemove", function (e) {
@@ -544,7 +561,9 @@ document.addEventListener("mouseup", function (e) {
 				document.getElementById(userDragElm.card).style.transition = "all .2s";
 				document.getElementById(userDragElm.card).style.left = userDragElm.targetElement.style.left;
 				document.getElementById(userDragElm.card).style.top = userDragElm.targetElement.style.top;
-				document.getElementById(userDragElm.card).style.transform = userDragElm.targetElement.style.transform;		
+				document.getElementById(userDragElm.card).style.transform = userDragElm.targetElement.style.transform;
+
+				updateGameState();				
 			} else {
 				if (userDragElm.deck == "stock") {
 					//Take from stockPile
