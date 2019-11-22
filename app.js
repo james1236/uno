@@ -44,7 +44,10 @@ function generateReferenceDeck() {
 	}
 }
 
-generateReferenceDeck();
+function newGame() {
+	generateReferenceDeck();
+	
+}
 
 
 io.sockets.on("connection",function(socket) {

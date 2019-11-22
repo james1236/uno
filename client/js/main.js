@@ -91,8 +91,6 @@ function generateReferenceDeck() {
 
 generateReferenceDeck();
 
-createGame();
-
 function createGame() {
 	clearBoard();
 	game.stockPile = shuffle(referenceDeck);
@@ -217,7 +215,7 @@ function drawUnitCircle() {
 	board.appendChild(circleTest);
 }
 
-function generatePlayerDeck(playerID) { //TODO: generate decks around a circle (360/players.length) starting with the player deck at 0deg
+function generatePlayerDeck(playerID) {
 	//Calculate optimum deck curvature for it's length
 	testvar = game.playerDecks[playerID].length;
 	if (testvar < 3) {
@@ -323,11 +321,18 @@ function generateDiscardPile() {
 	discardPlaceholder.style.left = "calc(50% - 24px + 36px)";
 	discardPlaceholder.classList.add("discardPlaceholder");
 	
+	discardPlaceholder2 = generateCard(game.discardPile[game.discardPile.length-1],"discardPlaceholder2");
+	discardPlaceholder2.style.top = "calc(50% - 32px)";
+	discardPlaceholder2.style.left = "calc(50% - 24px + 36px)";
+	discardPlaceholder2.classList.add("discardPlaceholder2");
+	
+	discard.appendChild(discardPlaceholder2);
 	discard.appendChild(discardPlaceholder);
 	board.appendChild(discard);
 }
 
 function updatePlayerDecks() {
+	if (gameState == "notStarted") {return};
 	decks = document.getElementsByClassName("deck");
 	while (decks.length > 0) {
 		decks[0].innerHTML = "";
@@ -455,7 +460,7 @@ function dragCardStart(e) {
 		return;
 	}
 	
-	//Remove any previous userDrag elements
+	//Prevent drag if old drag unresolved
 	if (document.getElementsByClassName("userDrag").length > 0) {
 		return;
 	}
@@ -479,10 +484,6 @@ function dragCardStart(e) {
 	card.classList.add("userDrag");
 	
 	e.srcElement.style.display = "none";
-	//card.style.transition = "rotate 1s";
-	
-	//document.getElementById(userDrag.card).style.transition = "all 1s";
-	//document.getElementById(userDrag.card).style.transform = "rotate(0deg)";
 	
 	userDrag = true;
 	document.getElementsByClassName("userDrag")[0].srcElement = e.srcElement;
@@ -552,7 +553,6 @@ document.addEventListener("mouseup", function (e) {
 				
 				for (target of targetDeck.childNodes) {
 					if (target.id == (userDragElm.srcElement.id.split("@")[0]+"@"+endIndex)) {
-						console.log(target);
 						userDragElm.targetElement = target;
 					}
 				}
@@ -568,7 +568,6 @@ document.addEventListener("mouseup", function (e) {
 				if (userDragElm.deck == "stock") {
 					//Take from stockPile
 					cardTypeToAdd = game.stockPile.pop();
-					console.log(cardTypeToAdd);
 					playerDeckInsertAtIndex(getUserPlayerID(),cardTypeToAdd,-1);
 					
 					targetDeck = document.getElementById(getUserPlayerID());
@@ -593,9 +592,10 @@ document.addEventListener("mouseup", function (e) {
 				} else {
 					//Play card (add to discardPile)
 					animationTimer = 500;
+					
 					document.getElementById(userDragElm.card).style.transition = "all .5s";
-					document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder")[0].style.left;
-					document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder")[0].style.top;
+					document.getElementById(userDragElm.card).style.left = document.getElementsByClassName("discardPlaceholder2")[0].style.left;
+					document.getElementById(userDragElm.card).style.top = document.getElementsByClassName("discardPlaceholder2")[0].style.top;
 					document.getElementById(userDragElm.card).style.transform = "rotate(0deg)";
 					
 					playerDeckRemoveAtIndex(userDragElm.deck,parseInt(userDragElm.srcElement.id.split("@")[1]));
@@ -653,12 +653,6 @@ function moveCard(playerID,startIndex,targetIndex) {
 	return endIndex;
 }
 
-//https://stackoverflow.com/questions/4353525/floating-point-linear-interpolation
-function lerp(a, b, percent)
-{
-    return a + percent * (b - a);
-}
-
 function distanceBetween(x1,y1,x2,y2) {
 	a = x1 - x2;
 	b = y1 - y2;
@@ -669,27 +663,6 @@ function distanceBetween(x1,y1,x2,y2) {
 function clearBoard () {
 	board.innerHTML = "";
 }
-
-function backgroundUpdate() {
-	backgroundTimer++;
-	document.body.style.backgroundPosition = "right "+((backgroundTimer/3)%64)+"px bottom "+((backgroundTimer/3)%64)+"px";
-	
-	backgroundRotation+=0.21;
-	
-	bgg1 = JSON.parse(JSON.stringify(backgroundGradient1)); bgg2 = JSON.parse(JSON.stringify(backgroundGradient2)); bgg3 = JSON.parse(JSON.stringify(backgroundGradient3));
-	
-	if (gameState != "yourTurn") {
-		bgg1[3] = 0.15; bgg2[3] = 0.15; bgg3[3] = 0.15;
-	}
-	
-	board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+bgg1[0]+","+bgg1[1]+","+bgg1[2]+","+bgg1[3]+") "+gradientInterpolation[0]+"%, rgba("+bgg2[0]+","+bgg2[1]+","+bgg2[2]+","+bgg2[3]+") "+gradientInterpolation[1]+"%, rgba("+bgg3[0]+","+bgg3[1]+","+bgg3[2]+","+bgg3[3]+") "+gradientInterpolation[2]+"%)";
-	
-	requestAnimationFrame(backgroundUpdate);
-}
-
-//console.log("bgInterval: "+setInterval(backgroundUpdate,1000/60));
-backgroundUpdate();
-
 
 function shuffle(b) {
 	//https://stackoverflow.com/a/6274381/5493555
@@ -713,3 +686,61 @@ function shuffle(b) {
 	
 	createGame();
 },500);*/
+
+
+function hideMenu() {
+	if (gameState != "notStarted") {
+		return;
+	}
+	
+	startMouseOut();
+	
+	document.getElementsByClassName("debugButton")[0].classList.add("menuFadeOut");
+	document.getElementById("title").classList.add("menuFadeOut");
+	document.getElementById("subtitle").classList.add("menuFadeOut");
+	document.getElementById("board").classList.add("menuFadeOut");
+	document.getElementById("titlesContainer").classList.add("menuFadeOut");
+	setTimeout(function () {document.getElementById("titlesContainer").style.display = "none";},400);
+	
+	createGame();
+}
+
+function startMouseEnter() {
+	if (gameState != "notStarted") {
+		return;
+	}
+	document.getElementById("title").classList.add("menuFadeOutTease");
+	document.getElementById("subtitle").classList.add("menuFadeOutTease");
+}
+
+function startMouseOut() {
+	document.getElementById("title").classList.remove("menuFadeOutTease");
+	document.getElementById("subtitle").classList.remove("menuFadeOutTease");
+}
+
+document.getElementsByClassName("debugButton")[0].addEventListener("mousedown", hideMenu);
+document.getElementsByClassName("debugButton")[0].addEventListener("mouseenter", startMouseEnter);
+document.getElementsByClassName("debugButton")[0].addEventListener("mouseout", startMouseOut);
+
+function backgroundUpdate() {
+	backgroundTimer++;
+	document.body.style.backgroundPosition = "right "+((backgroundTimer/3)%64)+"px bottom "+((backgroundTimer/3)%64)+"px";
+	
+	backgroundRotation+=0.21;
+	
+	bgg1 = JSON.parse(JSON.stringify(backgroundGradient1)); bgg2 = JSON.parse(JSON.stringify(backgroundGradient2)); bgg3 = JSON.parse(JSON.stringify(backgroundGradient3));
+	
+	if (gameState != "yourTurn") {
+		bgg1[3] = 0.15; bgg2[3] = 0.15; bgg3[3] = 0.15;
+	}
+	
+	if (gameState == "notStarted") {
+		board.style.background = "rgba(0,0,0,0)";
+	} else {
+		board.style.background = "linear-gradient("+backgroundRotation+"deg, rgba("+bgg1[0]+","+bgg1[1]+","+bgg1[2]+","+bgg1[3]+") "+gradientInterpolation[0]+"%, rgba("+bgg2[0]+","+bgg2[1]+","+bgg2[2]+","+bgg2[3]+") "+gradientInterpolation[1]+"%, rgba("+bgg3[0]+","+bgg3[1]+","+bgg3[2]+","+bgg3[3]+") "+gradientInterpolation[2]+"%)";
+	}
+	
+	requestAnimationFrame(backgroundUpdate);
+}
+
+backgroundUpdate();
