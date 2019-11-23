@@ -11,6 +11,8 @@ var gradientInterpolation = [0,0,100];
 var gameState = "notStarted";
 var userDrag = false;
 
+var paused = false;
+
 //This is "permenant" server side info
 var players = [
 	{
@@ -580,7 +582,6 @@ document.addEventListener("mouseup", function (e) {
 					
 					userDragElm.style.opacity = 0.5;
 					userDragElm.targetElement.style.display = "none";
-					userDragElm.style.zIndex = "9999";
 					
 					document.getElementById(userDragElm.card).classList.add("cardFlip");
 					
@@ -687,40 +688,50 @@ function shuffle(b) {
 	createGame();
 },500);*/
 
+createGame();
 
 function hideMenu() {
-	if (gameState != "notStarted") {
+	if (!paused) {
 		return;
 	}
 	
 	startMouseOut();
 	
-	document.getElementsByClassName("debugButton")[0].classList.add("menuFadeOut");
-	document.getElementById("title").classList.add("menuFadeOut");
-	document.getElementById("subtitle").classList.add("menuFadeOut");
 	document.getElementById("board").classList.add("menuFadeOut");
 	document.getElementById("titlesContainer").classList.add("menuFadeOut");
 	setTimeout(function () {document.getElementById("titlesContainer").style.display = "none";},400);
 	
-	createGame();
+	paused = false;
 }
 
-function startMouseEnter() {
-	if (gameState != "notStarted") {
+function startMouseOver() {
+	if (!paused) {
 		return;
 	}
-	document.getElementById("title").classList.add("menuFadeOutTease");
-	document.getElementById("subtitle").classList.add("menuFadeOutTease");
+	document.getElementById("titlesContainer").classList.add("menuFadeOutTease");
 }
 
 function startMouseOut() {
-	document.getElementById("title").classList.remove("menuFadeOutTease");
-	document.getElementById("subtitle").classList.remove("menuFadeOutTease");
+	document.getElementById("titlesContainer").classList.remove("menuFadeOutTease");
 }
 
-document.getElementsByClassName("debugButton")[0].addEventListener("mousedown", hideMenu);
-document.getElementsByClassName("debugButton")[0].addEventListener("mouseenter", startMouseEnter);
-document.getElementsByClassName("debugButton")[0].addEventListener("mouseout", startMouseOut);
+function toggleMenu() {
+	if (paused) {
+		hideMenu();
+	} else {
+		document.getElementById("titlesContainer").style.display = "";
+		document.getElementById("titlesContainer").classList.remove("menuFadeOut");
+		paused = true;
+	}
+}
+
+function menuIconMouseOver() {
+	document.getElementById("menuIcon").style.opacity = 1;
+}
+
+function menuIconMouseOut() {
+	document.getElementById("menuIcon").style.opacity = 0.8;
+}
 
 function backgroundUpdate() {
 	backgroundTimer++;

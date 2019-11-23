@@ -156,10 +156,11 @@
 		transition: all .05s;
 		transform: translate(0px,2px);
 	}
-	.debugButton.menuFadeOut {
+	
+	#titlesContainer.menuFadeOut .debugButton {
 		opacity: 0.8;
 		transition: all .4s;
-		transform: translate(0px,20px);
+		transform: translate(0px,30px);
 		opacity: 0;
 	}	
 	
@@ -203,40 +204,60 @@
 		text-shadow: 4px 0px 0px #3a64cf;
 	}
 	
-	#title.menuFadeOut {
+	#titlesContainer.menuFadeOut #title {
 		transition: all .4s;
 		transition-timing-function: ease;
 		transform: translate(-50%,0px);
 	}	
 	
-	#subtitle.menuFadeOut {
+	#titlesContainer.menuFadeOut #subtitle {
 		transition: all .4s;
 		transition-timing-function: ease;
 		transform: translate(50%,0px);
 	}	
 	
-	#title.menuFadeOutTease {
+	#titlesContainer.menuFadeOutTease #title {
 		transition: all .05s;
 		transition-timing-function: ease;
 		transform: translate(-2%,0px);
 	}	
 	
-	#subtitle.menuFadeOutTease {
+	#titlesContainer.menuFadeOutTease #subtitle {
 		transition: all .05s;
 		transition-timing-function: ease;
 		transform: translate(2%,0px);
+	}
+	
+	#menuIcon {
+		position: fixed;
+		background-size: 32px 32px;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-color: rgba(255,255,255,0.1);
+		background-image: url('img/menuicon.png');
+		width: 44px;
+		height: 44px;
+		top: 16px;
+		right: 16px;
+		border-style: solid;
+		border-color: rgba(255,255,255,0.1);
+		border-opacity: 0;
+		border-width: 1px;
+		border-radius: 5px;
+		opacity: 0.8;
 	}
 
 	</style>
 	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 </head>
 <body onresize="updatePlayerDecks()" style="background-image: url('img/bg.png');">
-	<div id="titlesContainer">
+	<div id="titlesContainer" style="display:none">
 		<p id="title">UNO</p>
 		<p id="subtitle">.online</p>
-		<a class="debugButton">Start Game</a>
+		<a onmouseover="startMouseOver()" onmouseout="startMouseOut()" onmousedown="hideMenu()" class="debugButton">Start Game</a>
 	</div>
-	<div id="board"></div>
+	<div id="board" style="opacity:1"></div>
+	<div onmouseover="menuIconMouseOver()" onmouseout="menuIconMouseOut()" onclick="toggleMenu()" id="menuIcon"></div>
 	<script src="js/main.js"></script>
 </body>
 </html>
